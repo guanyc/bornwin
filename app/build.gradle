@@ -1,0 +1,217 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'dagger.hilt.android.plugin'
+    id 'kotlin-kapt'
+    //id 'com.google.devtools.ksp'
+
+    //id "org.jetbrains.kotlin.plugin.serialization"
+}
+
+
+android {
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.guanyc.stock.discipline"
+        namespace "com.guanyc.stock.discipline"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
+        resourceConfigurations += ['en',  'zh-rCN']
+        kapt {
+            arguments {
+                arg("room.schemaLocation", "$projectDir/schemas")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            applicationIdSuffix ".debug"
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+        //jvmTarget = "19"
+    }
+    buildFeatures {
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.11"
+        //  id 'org.jetbrains.kotlin.android' version '1.9.23' apply false
+        //kotlinCompilerVersion = "1.9.23"
+
+    }
+
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+}
+
+kotlin {
+    sourceSets {
+        all {
+            languageSettings {
+                optIn("kotlin.RequiresOptIn")
+            }
+        }
+    }
+}
+
+dependencies {
+    //implementation 'androidx.compose.material3:material3-android:1.2.1'
+
+    //def room_version = "2.4.3"
+    def room_version = "2.6.1"
+
+    def coroutines_version = "1.6.1"
+
+
+    //implementation "androidx.compose.ui:ui:1.4.3"
+    //implementation "androidx.compose.material:material:1.4.3"
+    //implementation "androidx.compose.ui:ui-tooling-preview:1.4.3"
+    //implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.6.1"
+    //implementation "androidx.activity:activity-compose:1.7.2"
+    //implementation "androidx.room:room-runtime:2.5.1"
+    //kapt "androidx.room:room-compiler:2.5.1"
+
+    //implementation 'androidx.multidex:multidex:2.0.1'
+
+
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha07"
+
+    //implementation platform('androidx.compose:compose-bom:2023.03.00')
+
+    implementation(platform("androidx.compose:compose-bom:2024.01.00"))
+
+
+    implementation 'androidx.core:core-ktx:1.12.0'
+
+
+    implementation "androidx.compose.ui:ui"
+    implementation "androidx.compose.material:material"
+    debugImplementation "androidx.compose.ui:ui-tooling"
+    implementation "androidx.compose.ui:ui-tooling-preview"
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    implementation 'androidx.activity:activity-compose:1.7.0'
+
+    implementation 'androidx.work:work-runtime-ktx:2.7.1'
+
+    //implementation "androidx.paging:paging-compose:3.2.1"
+    //implementation "androidx.paging:paging-runtime-ktx:3.2.1"
+    //implementation "androidx.paging:paging-common-ktx:3.2.1"
+
+    //implementation "androidx.room:room-paging:2.6.1"
+
+
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
+    // For instrumentation tests
+    androidTestImplementation 'com.google.dagger:hilt-android-testing:2.51'
+    androidTestAnnotationProcessor 'com.google.dagger:hilt-compiler:2.51'
+
+    // For local unit tests
+    testImplementation 'com.google.dagger:hilt-android-testing:2.51'
+    testAnnotationProcessor 'com.google.dagger:hilt-compiler:2.51'
+
+    // Compose navigation
+    implementation "androidx.navigation:navigation-compose:2.7.7"
+    //implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
+    implementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
+
+
+    // Room
+    implementation "androidx.room:room-runtime:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+    //ksp 'androidx.room:room-compiler:2.5.1'
+
+    implementation "androidx.room:room-ktx:$room_version"
+
+    //Dagger - Hilt
+    //implementation "com.google.dagger:hilt-android:2.43.2"
+    //implementation 'com.google.dagger:hilt-android:2.51'
+    implementation 'com.google.dagger:hilt-android:2.51'
+
+    //annotationProcessor 'com.google.dagger:hilt-compiler:2.51'
+    kapt 'com.google.dagger:hilt-compiler:2.51'
+
+    kapt 'com.google.dagger:hilt-android-compiler:2.51'
+    //kapt "androidx.hilt:hilt-compiler:1.0.0"
+    kapt "androidx.hilt:hilt-compiler:1.2.0"
+    //implementation 'androidx.hilt:hilt-work:1.0.0'
+    implementation 'androidx.hilt:hilt-work:1.2.0'
+
+    // Coroutines
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0"
+
+    // Gson
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // Preferences DataStore
+    implementation "androidx.datastore:datastore-preferences:1.0.0"
+
+    // Accompanist libraries
+    //implementation 'com.google.accompanist:accompanist-flowlayout:0.34.0'
+    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.34.0'
+    implementation 'com.google.accompanist:accompanist-permissions:0.34.0'
+
+    // Compose MarkDown
+    implementation 'com.github.jeziellago:compose-markdown:0.2.9'
+
+    // Compose Glance (Widgets)
+    //implementation "androidx.glance:glance-appwidget:1.0.0-alpha05"
+
+    //Moshi
+    implementation 'com.squareup.moshi:moshi-kotlin:1.15.1'
+
+    // WorkManager
+    //implementation 'androidx.work:work-runtime-ktx:2.8.1'
+
+    // Compose live data
+    //implementation "androidx.compose.runtime:runtime-livedata"
+
+    //html text
+    implementation 'com.github.ireward:compose-html:1.0.2'
+
+    //android ml ocr
+    implementation 'com.google.mlkit:text-recognition-chinese:16.0.0'
+
+    //coil compose
+    //implementation("io.coil-kt:coil-compose:2.6.0")
+
+    implementation "androidx.compose.material:material-icons-core:1.6.8"
+    implementation "androidx.compose.material:material-icons-extended:1.6.8"
+
+    // Kotlinx serialization
+    //implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+
+
+
+}
+
+kapt {
+    correctErrorTypes = true
+}

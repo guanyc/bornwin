@@ -1,0 +1,15 @@
+package com.guanyc.stock.discipline.presentation.main.components
+
+import com.guanyc.stock.discipline.domain.model.PinnedTabEntityStockTargetList
+import com.guanyc.stock.discipline.domain.model.StockTarget
+import com.guanyc.stock.discipline.domain.repository.StockTargetRepository
+import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
+
+class GetTabPinnedStockTargetListUseCase  @Inject constructor(
+    private val StockTargetRepository: StockTargetRepository
+) {
+    operator fun invoke(): Flow<List<PinnedTabEntityStockTargetList>> {
+        return StockTargetRepository.getAllPinnedTabEntityStockTargetList()
+    }
+}

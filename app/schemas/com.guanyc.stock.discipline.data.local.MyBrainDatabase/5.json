@@ -1,0 +1,356 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 5,
+    "identityHash": "81ce88e0e0d0d6e7d9cc9323d2e0d170",
+    "entities": [
+      {
+        "tableName": "targetholder",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `tabs` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tabs",
+            "columnName": "tabs",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "stocknotes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`stockNoteId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `createDate` TEXT NOT NULL, `color` INTEGER NOT NULL, `isCompleted` INTEGER NOT NULL, `hasUnplannedAction` INTEGER NOT NULL, `reviewMarket` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "stockNoteId",
+            "columnName": "stockNoteId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createDate",
+            "columnName": "createDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "color",
+            "columnName": "color",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isCompleted",
+            "columnName": "isCompleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasUnplannedAction",
+            "columnName": "hasUnplannedAction",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reviewMarket",
+            "columnName": "reviewMarket",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "stockNoteId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_stocknotes_createDate",
+            "unique": true,
+            "columnNames": [
+              "createDate"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_stocknotes_createDate` ON `${TABLE_NAME}` (`createDate`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "targets",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`stockTargetId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `stockNoteId` INTEGER NOT NULL, `createDate` TEXT NOT NULL, `updateDate` INTEGER NOT NULL, `code` TEXT NOT NULL, `name` TEXT NOT NULL, `tabs` TEXT NOT NULL, `targetReasonActed` TEXT NOT NULL, `targetActionActed` TEXT NOT NULL, `hasPosition` INTEGER NOT NULL, `stockPosition` REAL NOT NULL, `stockPositionPercentage` REAL NOT NULL, `stockPositionValue` REAL NOT NULL, `stockPositionValuePercentage` REAL NOT NULL, `stockPositionValueChange` REAL NOT NULL, `isOpportunityGiven` INTEGER NOT NULL, `isPlanActed` INTEGER NOT NULL, `isProfitable` INTEGER NOT NULL, `profitOrLossPercentage` REAL NOT NULL, `actionReview` TEXT NOT NULL, `isCompleted` INTEGER NOT NULL, `comment` TEXT NOT NULL, `isFavorite` INTEGER NOT NULL, `isMoveTop` INTEGER NOT NULL, FOREIGN KEY(`stockNoteId`) REFERENCES `stocknotes`(`stockNoteId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "stockTargetId",
+            "columnName": "stockTargetId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stockNoteId",
+            "columnName": "stockNoteId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createDate",
+            "columnName": "createDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updateDate",
+            "columnName": "updateDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "code",
+            "columnName": "code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tabs",
+            "columnName": "tabs",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetReasonActed",
+            "columnName": "targetReasonActed",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetActionActed",
+            "columnName": "targetActionActed",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasPosition",
+            "columnName": "hasPosition",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stockPosition",
+            "columnName": "stockPosition",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stockPositionPercentage",
+            "columnName": "stockPositionPercentage",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stockPositionValue",
+            "columnName": "stockPositionValue",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stockPositionValuePercentage",
+            "columnName": "stockPositionValuePercentage",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stockPositionValueChange",
+            "columnName": "stockPositionValueChange",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isOpportunityGiven",
+            "columnName": "isOpportunityGiven",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPlanActed",
+            "columnName": "isPlanActed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isProfitable",
+            "columnName": "isProfitable",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profitOrLossPercentage",
+            "columnName": "profitOrLossPercentage",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionReview",
+            "columnName": "actionReview",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isCompleted",
+            "columnName": "isCompleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "comment",
+            "columnName": "comment",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isFavorite",
+            "columnName": "isFavorite",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isMoveTop",
+            "columnName": "isMoveTop",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "stockTargetId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_targets_stockNoteId",
+            "unique": false,
+            "columnNames": [
+              "stockNoteId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_targets_stockNoteId` ON `${TABLE_NAME}` (`stockNoteId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "stocknotes",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "stockNoteId"
+            ],
+            "referencedColumns": [
+              "stockNoteId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "tab_pinned_list",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tab` TEXT NOT NULL, `pinnedList` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tab",
+            "columnName": "tab",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pinnedList",
+            "columnName": "pinnedList",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "tab_topped_list",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tab` TEXT NOT NULL, `toppedList` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tab",
+            "columnName": "tab",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "toppedList",
+            "columnName": "toppedList",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '81ce88e0e0d0d6e7d9cc9323d2e0d170')"
+    ]
+  }
+}

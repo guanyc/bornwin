@@ -1,0 +1,251 @@
+
+dependencies {
+    implementation "androidx.compose.ui:ui:1.4.3"
+    implementation "androidx.compose.material:material:1.4.3"
+    implementation "androidx.compose.ui:ui-tooling-preview:1.4.3"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.6.1"
+    implementation "androidx.activity:activity-compose:1.7.2"
+
+    implementation "androidx.compose.material:material-icons-core:1.4.3"
+    implementation "androidx.compose.material:material-icons-extended:1.4.3"
+
+}
+
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MyApp()
+        }
+    }
+}
+
+@Composable
+fun MyApp() {
+    var allExpanded by remember { mutableStateOf(false) }
+    var expandedItems by remember { mutableStateOf(listOf<Boolean>()) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Expandable List") },
+                actions = {
+                    IconButton(onClick = {
+                        allExpanded = !allExpanded
+                        expandedItems = expandedItems.map { allExpanded }
+                    }) {
+                        Icon(
+                            imageVector = if (allExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = if (allExpanded) "Collapse All" else "Expand All"
+                        )
+                    }
+                }
+            )
+        }
+    ) {
+        ExpandableList(
+            items = List(10) { "Item $it" },
+            expandedItems = expandedItems,
+            onExpandChange = { index, expanded ->
+                expandedItems = expandedItems.toMutableList().apply {
+                    this[index] = expanded
+                }
+            },
+            allExpanded = allExpanded,
+            setAllExpanded = { expanded ->
+                expandedItems = List(10) { expanded }
+            }
+        )
+    }
+}
+
+@Composable
+fun ExpandableList(
+    items: List<String>,
+    expandedItems: List<Boolean>,
+    onExpandChange: (Int, Boolean) -> Unit,
+    allExpanded: Boolean,
+    setAllExpanded: (Boolean) -> Unit
+) {
+    LaunchedEffect(items) {
+        setAllExpanded(allExpanded)
+    }
+
+    LazyColumn {
+        items(items.size) { index ->
+            ExpandableListItem(
+                title = items[index],
+                expanded = expandedItems.getOrNull(index) ?: false,
+                onExpandChange = { onExpandChange(index, it) }
+            )
+        }
+    }
+}
+
+@Composable
+fun ExpandableListItem(
+    title: String,
+    expanded: Boolean,
+    onExpandChange: (Boolean) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onExpandChange(!expanded) }
+                .padding(8.dp)
+        ) {
+            Text(text = title, fontSize = 20.sp)
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(
+                imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = if (expanded) "Collapse" else "Expand"
+            )
+        }
+        if (expanded) {
+            Text(
+                text = "Expanded content for $title",
+                modifier = Modifier.padding(8.dp)
+            )
+        }
+    }
+}
+
+data class User(
+    val name: String,
+    val age: Int,
+    val emails: List<Email>
+)
+
+data class Email(
+    val address: String,
+    val type: String // e.g., "personal", "work"
+)
+
+
+fun userToString(user: User): String {
+    return buildString {
+        append("Name: ${user.name}\n")
+        append("Age: ${user.age}\n")
+        append("Emails:\n")
+        user.emails.forEach {
+            append("  - ${it.type}: ${it.address}\n")
+        }
+    }
+}
+
+fun userToMarkdown(user: User): String {
+    return buildString {
+        append("# User Information\n\n")
+        append("**Name**: ${user.name}\n\n")
+        append("**Age**: ${user.age}\n\n")
+        append("## Emails:\n")
+        user.emails.forEach {
+            append("- **${it.type}**: ${it.address}\n")
+        }
+    }
+}
+
+fun userToEmailContent(user: User): String {
+    return buildString {
+        append("Hello,\n\n")
+        append("Here is the user information:\n")
+        append("Name: ${user.name}\n")
+        append("Age: ${user.age}\n")
+        append("Emails:\n")
+        user.emails.forEach {
+            append("  - ${it.type}: ${it.address}\n")
+        }
+        append("\nBest regards,\n")
+    }
+}
+
+@Composable
+fun ShareDataDialog(user: User, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Share User Data") },
+        text = {
+            Column {
+                Text("Choose how you'd like to share the information:")
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(onClick = {
+                    val intent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, userToString(user))
+                        type = "text/plain"
+                    }
+                    context.startActivity(Intent.createChooser(intent, "Share as Text"))
+                }) {
+                    Text("Share as String")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(onClick = {
+                    val intent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, userToMarkdown(user))
+                        type = "text/markdown"
+                    }
+                    context.startActivity(Intent.createChooser(intent, "Share as Markdown"))
+                }) {
+                    Text("Share as Markdown")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(onClick = {
+                    val intent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_EMAIL, arrayOf("recipient@example.com"))
+                        putExtra(Intent.EXTRA_SUBJECT, "User Information")
+                        putExtra(Intent.EXTRA_TEXT, userToEmailContent(user))
+                        type = "message/rfc822"
+                    }
+                    context.startActivity(Intent.createChooser(intent, "Send Email"))
+                }) {
+                    Text("Share as Email")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(onClick = {
+                    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clip = ClipData.newPlainText("UserData", userToString(user))
+                    clipboardManager.setPrimaryClip(clip)
+                    Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                }) {
+                    Text("Copy to Clipboard")
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}

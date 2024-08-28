@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- For the Calendar events features -->
+    <!--
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    -->
+
+    <!-- For reminders -->
+    <!-- to start the alarms after restart.
+    (By default, all alarms are canceled when a device shuts down) -->
+    <!--
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    -->
+    <!-- For backup    -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+         android:maxSdkVersion="28"/>
+
+    <application
+        android:name="com.guanyc.stock.discipline.app.MyBrainApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/win_first"
+        android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
+        android:roundIcon="@mipmap/win_first_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MyBrain"
+        tools:targetApi="33">
+        <activity
+            android:name="com.guanyc.stock.discipline.presentation.main.MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.MyBrain"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+
+        <receiver
+            android:name="com.guanyc.stock.discipline.util.alarms.BootBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name="com.guanyc.stock.discipline.util.alarms.AlarmReceiver"
+            android:enabled="true" />
+        <receiver
+            android:name="com.guanyc.stock.discipline.util.alarms.TaskActionButtonBroadcastReceiver"
+            android:enabled="true" />
+            -->
+
+        <!--
+        <activity
+            android:name="com.guanyc.stock.discipline.presentation.bookmarks.SaveBookmarkActivity"
+            android:autoRemoveFromRecents="true"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter android:label="@string/save_bookmark">
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.guanyc.stock.discipline.domain.use_case.tasks.AddTaskFromShareActivity"
+            android:autoRemoveFromRecents="true"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter android:label="@string/add_to_tasks">
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+        -->
+
+        <!-- The Add task tile in the quick settings -->
+        <!--
+        <service
+            android:name="com.guanyc.stock.discipline.presentation.tasks.AddTaskTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_check"
+            android:label="@string/add_task_to_my_brain"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service> -->
+
+        <!--
+        <receiver
+            android:name="com.guanyc.stock.discipline.presentation.glance_widgets.CalendarWidgetReceiver"
+            android:enabled="@bool/glance_appwidget_available"
+            android:exported="true"
+            android:label="@string/calendar">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/calendar_widget_info" />
+        </receiver>   Calendar widget-->
+
+        <!--
+        <receiver
+            android:name="com.guanyc.stock.discipline.presentation.glance_widgets.RefreshCalendarWidgetReceiver"
+            android:enabled="@bool/glance_appwidget_available"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PROVIDER_CHANGED" />
+
+                <data android:scheme="content" />
+                <data android:host="com.android.calendar" />
+            </intent-filter>
+        </receiver>  For updating the events in the  calendar widget when there are changes-->
+
+        <!--
+        <receiver
+            android:name="com.guanyc.stock.discipline.presentation.glance_widgets.TasksWidgetReceiver"
+            android:enabled="@bool/glance_appwidget_available"
+            android:exported="false"
+            android:label="@string/tasks">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tasks_widget_info" />
+        </receiver>   Tasks widget-->
+
+        <!--
+        <receiver
+            android:name="com.guanyc.stock.discipline.presentation.glance_widgets.CompleteTaskWidgetReceiver"
+            android:enabled="@bool/glance_appwidget_available"
+            android:exported="false" />
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:node="remove" />  -->
+
+
+    </application>
+
+</manifest>

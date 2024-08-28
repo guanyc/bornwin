@@ -1,0 +1,88 @@
+package com.mhss.app.mybrain.presentation
+
+import android.Manifest
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.TextRecognizer
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.material.FloatingActionButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.core.content.ContextCompat
+import coil.compose.rememberImagePainter
+import coil.request.ImageRequest
+
+@Composable
+fun OcrFromGallery() {
+    val context = LocalContext.current
+    val uri = remember { mutableStateOf<Uri?>(null) }
+    val imageRequest = remember { ImageRequest.Builder(context).data(uri.value).build() }
+    val imagePainter = rememberImagePainter(imageRequest)
+
+    val resultText = remember { mutableStateOf("") }
+    val resultLauncher = rememberLauncherForActivityResult<Intent>(
+        contract = ActivityResultContracts.StartActivityForResult()) {
+
+        it.putExtra("use_front_camera", false)
+    }
+
+    var imageUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            uri?.let {
+                imageUri = it
+            }
+        }
+    )
+
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        BasicText(text = resultText.value)
+        Image(
+            painter = imagePainter,
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+        )
+    }
+
+    FloatingActionButton(onClick = {
+        val intent = Intent(Intent.ACTION_PICK).setType("image/*")
+        pickImageLauncher.launch(intent)
+    }) {
+        Icon(Icons.Default.PhotoLibrary, "Pick Image")
+    }
+
+    FloatingActionButton(onClick = {
+        val intent = Intent(context, CameraXActivity::class.java)
+        resultLauncher.launch(intent)
+    }) {
+        Icon(Icons.Default.PhotoCamera, "Camera")
+    }
+
+    LaunchedEffect(uri.value) {
+        if (uri.value != null) {
+            val image = InputImage.fromBitmap(uri.value?.let {
+                ContextCompat.getContentResolver(context).openInputStream(it)?.use {
+                    BitmapFactory.decodeStream(it)
+                }
+            }, 0)
+            val recognizer = TextRecognition.getClient()
+            val text = recognizer.process(image).text
+            resultText.value = text
+        }
+    }
+}
