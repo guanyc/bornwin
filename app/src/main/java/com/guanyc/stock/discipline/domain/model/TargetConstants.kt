@@ -7,7 +7,6 @@ import com.guanyc.stock.discipline.presentation.main.components.TAB_TYPE
 import com.guanyc.stock.discipline.presentation.main.components.TabEntity
 
 
-
 val TargetConstants.tabReasons: List<TabEntity>
     get() {
         return tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
@@ -27,6 +26,10 @@ val TargetConstants.tabSpecialList: List<TabEntity>
         return tabs.filter { it.tabType == TAB_TYPE.TAB_SPECIAL }
     }
 
+val TargetConstants.tabOtherList: List<TabEntity>
+    get() {
+        return tabs.filter { it.tabType == TAB_TYPE.TAB_SPECIAL || it.tabType == TAB_TYPE.TAB_WATCHLIST }
+    }
 
 @Entity(
     tableName = "targetholder",

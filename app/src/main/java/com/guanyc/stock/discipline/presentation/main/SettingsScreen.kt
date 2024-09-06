@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,6 +79,31 @@ fun SettingsScreen(
                         )
                     }
                 }
+            }
+
+            item{
+                val newTargetCreateDateChoice = viewModel.getSettings(
+                    intPreferencesKey(Constants.NEW_TARGET_CREATEDATE_CHOICE_KEY),
+                    NewTargetCreateDateChoice.LATEST.value
+                ).collectAsState(initial =  NewTargetCreateDateChoice.LATEST.value)
+
+                NewTargetCreateDateChoiceSettingsItem(
+                    newTargetCreateDateChoice.value,
+                    onTodayClick = {
+                                   viewModel.saveSettings(
+                                       intPreferencesKey(Constants.NEW_TARGET_CREATEDATE_CHOICE_KEY),
+                                       NewTargetCreateDateChoice.TODAY.value
+                                       )
+                    },
+                    onLatestClick = {
+                        viewModel.saveSettings(
+                            intPreferencesKey(Constants.NEW_TARGET_CREATEDATE_CHOICE_KEY),
+                            NewTargetCreateDateChoice.LATEST.value
+                        )
+
+
+                    }
+                )
             }
 
 
@@ -174,6 +200,15 @@ fun SettingsScreen(
                 )
             }
 
+            //链接: https://pan.baidu.com/s/1-LIRhI2B_wjD5t5mv-Ub_w?pwd=born 提取码: born 复制这段内容后打开百度网盘手机App，操作更方便哦
+            item {
+                SettingsBasicLinkItem(
+                    title = R.string.download,
+                    imageVector = Icons.Default.Download,
+                    link = Constants.Download_LINK
+                )
+            }
+
             item {
                 Text(
                     text = stringResource(R.string.product),
@@ -234,6 +269,71 @@ fun ThemeSettingsItem(theme: Int = 0, onClick: () -> Unit = {}) {
         }
     }
 }
+
+
+@Composable
+fun NewTargetCreateDateChoiceSettingsItem(
+    newTargetCreateDateChoice: Int,
+    onTodayClick: () -> Unit = {},
+    onLatestClick: () -> Unit = {}
+) {
+    var expanded by remember { mutableStateOf(false) }
+    SettingsItemCard(
+        cornerRadius = 16.dp,
+        onClick = {
+            expanded = true
+        },
+    ) {
+        Text(
+            text = stringResource(R.string.new_target_createdate_choice),
+            style = MaterialTheme.typography.h6
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(),
+            contentAlignment = Alignment.CenterEnd
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = when (newTargetCreateDateChoice) {
+                        NewTargetCreateDateChoice.LATEST.value -> stringResource(R.string.NewTargetCreateDateChoice_lastest)
+                        NewTargetCreateDateChoice.TODAY.value -> stringResource(R.string.NewTargetCreateDateChoice_today)
+                        else -> stringResource(R.string.NewTargetCreateDateChoice_today)
+                    },
+                    style = MaterialTheme.typography.body1
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null)
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                DropdownMenuItem(onClick = {
+                    onLatestClick()
+                    expanded = false
+                }) {
+                    Text(
+                        text = stringResource(id = R.string.latest),
+                        style = MaterialTheme.typography.body1
+                    )
+                }
+                DropdownMenuItem(onClick = {
+                    onTodayClick()
+                    expanded = false
+                }) {
+                    Text(
+                        text = stringResource(id = R.string.today),
+                        style = MaterialTheme.typography.body1
+                    )
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 fun StartUpScreenSettingsItem(

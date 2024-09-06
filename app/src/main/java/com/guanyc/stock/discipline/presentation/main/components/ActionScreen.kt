@@ -4,8 +4,16 @@ package com.guanyc.stock.discipline.presentation.main.components
 
 
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,7 +41,6 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
-import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
@@ -48,15 +55,15 @@ import androidx.compose.material.Tab
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.GroupOff
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material.primarySurface
 import androidx.compose.material.rememberScaffoldState
@@ -87,11 +94,16 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import com.guanyc.stock.discipline.R
 import com.guanyc.stock.discipline.app.getString
 import com.guanyc.stock.discipline.domain.model.StockTarget
 import com.guanyc.stock.discipline.domain.model.tabActions
 import com.guanyc.stock.discipline.domain.model.tabReasons
+import com.guanyc.stock.discipline.domain.model.targetActionList
+import com.guanyc.stock.discipline.domain.model.targetReasonList
 import com.guanyc.stock.discipline.presentation.util.Screen
 import com.guanyc.stock.discipline.theme.Golden
 import com.guanyc.stock.discipline.theme.Orange
@@ -183,18 +195,19 @@ fun ActionScreen(
 
     val scope = rememberCoroutineScope()
 
-
-    //var tabs: MutableList<TabEntity> by remember { mutableStateOf(mutableListOf<TabEntity>()) }
-
     var selectedTabIndex by rememberSaveable { mutableStateOf(0) }
 
-    //mutableStateListOf
     var contents: List<StockTarget> by remember { mutableStateOf(emptyList()) }
     var favorites: List<Boolean> by remember { mutableStateOf(emptyList()) }
+    var tabStrings = remember { mutableStateListOf<String>() }
+    //var targetReasonList = remember { mutableStateListOf<TabEntity>() }
 
 
     val showContextMenuIconsDialog = remember { mutableStateOf(false) }
     var showStockTargetNoteEditDialog = remember { mutableStateOf(false) }
+
+    var openShareStockNoteDialog = remember { mutableStateOf(false) }
+
 
     var showTabEntitySelectingDialog = remember { mutableStateOf(false) }
 
@@ -204,6 +217,21 @@ fun ActionScreen(
 
     val selectedItemIndex = remember { mutableStateOf(-1) }
     var dropDownItemsExpanded by remember { mutableStateOf(false) }
+
+
+    var imageUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            uri?.let {
+                //Log.d("imageUri", imageUri.toString())
+                imageUri = it
+            }
+        })
+
 
     BackHandler {
         /*
@@ -217,18 +245,18 @@ fun ActionScreen(
 
 
 
-    fun extracted(
+
+    fun reloadContentForTab(
         selectedTab: TabEntity, keyName: String
     ) {
         var selectedTab1 = selectedTab
         var keyName1 = keyName
-        Log.d("selectedTabIndex", selectedTabIndex.toString())
+
         if (selectedTabIndex != -1) {
             selectedTab1 = viewModel.uiState.tabs[selectedTabIndex]
             keyName1 = selectedTab1.title
 
-            Log.d("selectedTab", selectedTab1.toString())
-            Log.d("keyName", keyName1)
+
 
             if (selectedTab1.tabType == TAB_TYPE.TAB_SPECIAL) {
                 if (keyName1.lowercase(Locale.getDefault()) == context.getString(R.string.string_all)
@@ -261,7 +289,9 @@ fun ActionScreen(
                     //这个可以从settings preference里面保存获取
                 } else if (keyName1 == context.getString(R.string.string_special) || keyName1 == "特别关注" || keyName1 == "Special") {
                     contents = viewModel.uiState.stockTargets.filter {
-                        it.isFavorite
+                        it.isFavorite || it.tabs.any {
+                            it.title.contains("特别关注") || it.title.contains("Special")
+                        }
                     }
 
                 }
@@ -275,8 +305,40 @@ fun ActionScreen(
             }
 
             favorites = contents.map { it.isFavorite }
+
+            tabStrings.clear()
+            tabStrings.addAll(contents.map { stockTarget ->
+                stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
+                    .map { it.title }.joinToString(";")})
+
+
+
         }
     }
+
+    LaunchedEffect(imageUri) {
+        if (imageUri != null) {
+
+            val image: InputImage = InputImage.fromFilePath(context, imageUri!!)
+
+            val recognizer =
+                TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())
+
+            val result = recognizer.process(image).addOnSuccessListener { visionText ->
+                // Task completed successfully
+                // ...
+                //Log.d("visionText", visionText.toString())
+
+                viewModel.onEvent(ActionViewEvent.OnScanPhoto(visionText))
+
+            }.addOnFailureListener { e ->
+                // Task failed with an exception
+                // ...
+                e.printStackTrace()
+            }
+
+        }
+    }//扫描图片   LaunchedEffect(imageUri)
 
 
     Scaffold(
@@ -293,6 +355,7 @@ fun ActionScreen(
                 elevation = 0.dp,
                 navigationIcon = {},
                 actions = {
+
                     IconButton(onClick = {
                         scope.launch {
                             createTargetDialogValue.value = true
@@ -304,6 +367,23 @@ fun ActionScreen(
                             contentDescription = stringResource(R.string.add_stock_daily_note),
                             tint = colors.primary
                         )
+
+
+                    }
+
+                    IconButton(onClick = {}) {
+                        Icon(
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clickable {
+                                    galleryLauncher.launch("image/*")
+                                },
+                            tint = colors.primary,
+                            painter = painterResource(R.drawable.document_scanner_40px),
+                            contentDescription = stringResource(R.string.select_image_to_scan),
+                        )
+
+
                     }
                 })
         },
@@ -321,27 +401,45 @@ fun ActionScreen(
 
             LaunchedEffect(selectedTabIndex) {
 
-                extracted(selectedTab, keyName)
+                reloadContentForTab(selectedTab, keyName)
             }
 
 
             if (createTargetDialogValue.value) {
                 AddStockTargetDialog(uiState = viewModel.uiState, onDismissRequest = {
                     createTargetDialogValue.value = false
-                }, selectedTabEntity = selectedTab, onStockTargetAdd = {
-                    //unsaved stocktarget with no stocknoteId createDate
-                        stockTarget ->
-                    viewModel.onEvent(
-                        ActionViewEvent.addNewFreshStockTarget(
-                            stockTarget
-                        )
-                    )
-                    createTargetDialogValue.value = false
-                    Log.d("createTargetDialogValue", stockTarget.toString())
+                }, selectedTabEntity = selectedTab,
 
-                    contents = contents + stockTarget
+                    onStockTargetAdd = { stockTarget ->
 
-                })
+                        if (!viewModel.uiState.stockTargets.any { it.code.equals(stockTarget.code) }) {
+
+                            viewModel.onEvent(
+                                ActionViewEvent.addNewFreshStockTarget(
+                                    stockTarget
+                                )
+                            )
+
+                            createTargetDialogValue.value = false
+
+                            Log.d("createTargetDialogValue", stockTarget.toString())
+
+                            contents = contents + stockTarget
+                            favorites = contents.map { it.isFavorite }
+                            tabStrings.clear()
+                            tabStrings.addAll(contents.map { stockTarget ->
+                                stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
+                                    .map { it.title }.joinToString(";")})
+
+
+                        } else {
+                            Toast.makeText(
+                                context, context.getString(
+                                    R.string.stocktarget_already_exists, stockTarget.code
+                                ), Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    })
             }
 
 
@@ -413,6 +511,7 @@ fun ActionScreen(
                                                 ActionViewEvent.onSelectedTabIndexChanged(
                                                     tab, selectedTabIndex
                                                 )
+                                                //TODO 刷新UI的tab text和值
                                             )
 
                                         }) {
@@ -427,13 +526,14 @@ fun ActionScreen(
 
                                         navController.navigate(Screen.TabEntityEditorScreen.route)
                                     }) {
-                                        Text("Edit",
-                                            style = MaterialTheme.typography.h5.copy(
+                                        Text(
+                                            "Edit", style = MaterialTheme.typography.h5.copy(
                                                 color = colors.primarySurface,
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 18.sp
 
-                                            ))
+                                            )
+                                        )
                                     }
 
 
@@ -447,36 +547,28 @@ fun ActionScreen(
                             state = lazyListState, contentPadding = PaddingValues(bottom = 70.dp)
                         ) {
 
-                            /*
-                            var pinlistfortab: MutableList<StockTarget> =
-                                viewModel.uiState.tabPinListMap.getOrPut(selectedTab) { mutableListOf() }
-
-                            var toplistfortab: MutableList<StockTarget> =
-                                viewModel.uiState.tabTopListMap.getOrPut(selectedTab) { mutableListOf() }
-
-                             */
-
-                            //val tml = contents.map { it -> it.copy(isTopPinned=false, isMoveTop = false ) }.toMutableList()
-                            val tml = contents.toMutableList()
-
-                            contents = tml.toList()
-                            favorites = contents.map { it.isFavorite }
-
                             Log.d("contents", contents.toJson())
 
+                            //stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
+                            //  .map { it.title }.joinToString(";")
+
                             itemsIndexed(contents) { index, item ->
-                                ListItem(index, item, favorites[index], onClickToShowDialog = {
-                                    selectedItemIndex.value = index
-                                    showContextMenuIconsDialog.value = true
-                                })
+                                ListItem(index,
+                                    item,
+                                    favorites,
+                                    tabStrings.toList(),
+                                    onClickToShowDialog = {
+                                        selectedItemIndex.value = index
+                                        showContextMenuIconsDialog.value = true
+                                    })
                             }
                         }
                     }
 
 
                     if (showTabEntitySelectingDialog.value) {
-                        var stockTarget = contents[selectedItemIndex.value]
-                        //val initialValue = stockTarget.comment
+
+                        val stockTarget = contents[selectedItemIndex.value]
 
                         val tabEntityList = viewModel.uiState.tabs
 
@@ -486,9 +578,7 @@ fun ActionScreen(
                             showTabEntitySelectingDialog.value = false
                         }
                         //var targetActionList = remember { mutableStateListOf<TabEntity>() }
-                        var currentSelections by remember { mutableStateOf(value = contents[selectedItemIndex.value].tabs.map { it.title }) }
-
-                        Log.d("MultiSelectDialog 11 ", currentSelections.joinToString(";"))
+                        var currentSelections: List<String> by remember { mutableStateOf(value = contents[selectedItemIndex.value].tabs.map { it.title }) }
 
                         AlertDialog(onDismissRequest = { onDismissRequest1() },
                             title = { Text("Select Items") },
@@ -501,13 +591,17 @@ fun ActionScreen(
                                     //crossAxisSpacing = 8.dp
                                     maxItemsInEachRow = 4
                                 ) {
-                                    items.forEach { item ->
+                                    items.forEach { item: String ->
                                         Row(
                                             modifier = Modifier.padding(4.dp)
                                         ) {
-                                            Checkbox(checked = currentSelections.contains(item),
-                                                onCheckedChange = {
-                                                    if (it) {
+                                            Checkbox(
+                                                checked = currentSelections.any {
+                                                    it.equals(item) },
+
+                                                onCheckedChange = { checked ->
+                                                if (checked) {
+                                                    if (!currentSelections.any { it.equals(item) }) {
                                                         currentSelections =
                                                             currentSelections.toMutableList<String>()
                                                                 .apply {
@@ -515,7 +609,9 @@ fun ActionScreen(
                                                                         item
                                                                     )
                                                                 }
-                                                    } else {
+                                                    }
+                                                } else {
+                                                    if (currentSelections.any { it.equals(item) }) {
                                                         currentSelections =
                                                             currentSelections.toMutableList<String>()
                                                                 .apply {
@@ -524,7 +620,8 @@ fun ActionScreen(
                                                                     )
                                                                 }
                                                     }
-                                                })
+                                                }
+                                            })
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text(text = item)
                                         }
@@ -538,9 +635,21 @@ fun ActionScreen(
 
                                         var currentTabs =
                                             tabEntityList.filter { it.title in currentSelections }
-                                        var tabOld = stockTarget.tabs
+
+                                        Log.d(
+                                            "currentTabs",
+                                            currentSelections.joinToString(";")
+                                        )
+
+                                        Log.d(
+                                            "currentTabs",
+                                            currentTabs.map { it.title }.joinToString(";")
+                                        )
+
+                                        val tabOld = stockTarget.tabs
                                         stockTarget.tabs = currentTabs
-                                        var tabNew = stockTarget.tabs
+
+                                        val tabNew = stockTarget.tabs
 
                                         viewModel.onEvent(
                                             ActionViewEvent.onItemTabEntitiesChanged(
@@ -548,10 +657,18 @@ fun ActionScreen(
                                             )
                                         )
 
-                                        //extracted(selectedTab, keyName)
-                                        if (!tabNew.contains(selectedTab)) {
-                                            extracted(selectedTab, keyName)
-                                        }
+
+                                        //val stockTarget = contents[selectedItemIndex.value]
+
+                                        contents = contents.toMutableList()
+                                        favorites = contents.map { it.isFavorite }
+                                        tabStrings.clear()
+                                        tabStrings.addAll(contents.map { stockTarget ->
+                                            stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
+                                                .map { it.title }.joinToString(";")})
+
+                                        //selectedItemIndex for refresh
+
 
                                         //R.string.string_special
                                         if (tabNew.any { it.title.equals(getString(R.string.string_special)) }) {
@@ -576,6 +693,8 @@ fun ActionScreen(
 
                                         //contents[selectedItemIndex.value].tabs.add(TabEntity(it))
                                         showTabEntitySelectingDialog.value = false
+
+
                                         onDismissRequest1()
                                     }, enabled = currentSelections.isNotEmpty<String>()
                                 ) {
@@ -633,8 +752,7 @@ fun ActionScreen(
 
                             text = {
                                 Column(modifier = Modifier.padding(24.dp)) {
-                                    OutlinedTextField(
-                                        value = text,
+                                    OutlinedTextField(value = text,
                                         onValueChange = {
                                             text = it
                                             isValid.value =
@@ -650,6 +768,103 @@ fun ActionScreen(
                                             color = colors.error
                                         )
                                     }
+                                }
+                            })
+                    }
+
+                    if (openShareStockNoteDialog.value) {
+                        var stockTarget = contents[selectedItemIndex.value]
+                        //share dialog
+                        AlertDialog(//shape = RoundedCornerShape(25.dp),
+                            onDismissRequest = { openShareStockNoteDialog.value = false },
+                            title = { Text(stringResource(R.string.share)) },
+                            text = {
+                                Column {
+                                    Text(stringResource(R.string.choose_how_you_d_like_to_share_the_information))
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Button(onClick = {
+                                        val intent = Intent().apply {
+                                            action = Intent.ACTION_SEND
+                                            putExtra(Intent.EXTRA_TEXT, targetToString(stockTarget))
+                                            type = "text/plain"
+                                        }
+                                        context.startActivity(
+                                            Intent.createChooser(
+                                                intent, context.getString(R.string.share_as_text)
+                                            )
+                                        )
+                                    }) {
+                                        Text(context.getString(R.string.share_as_text))
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Button(onClick = {
+                                        val intent = Intent().apply {
+                                            action = Intent.ACTION_SEND
+                                            putExtra(
+                                                Intent.EXTRA_TEXT, targetToMarkdown(stockTarget)
+                                            )
+                                            type = "text/markdown"
+                                        }
+                                        context.startActivity(
+                                            Intent.createChooser(
+                                                intent,
+                                                context.getString(R.string.share_as_markdown)
+                                            )
+                                        )
+                                    }) {
+                                        Text(context.getString(R.string.share_as_markdown))
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Button(onClick = {
+                                        val intent = Intent().apply {
+                                            action = Intent.ACTION_SEND
+                                            putExtra(
+                                                Intent.EXTRA_EMAIL, arrayOf("recipient@example.com")
+                                            )
+                                            putExtra(Intent.EXTRA_SUBJECT, "User Information")
+                                            putExtra(
+                                                Intent.EXTRA_TEXT, targetToEmailContent(stockTarget)
+                                            )
+                                            type = "message/rfc822"
+                                        }
+                                        context.startActivity(
+                                            Intent.createChooser(
+                                                intent, context.getString(R.string.send_email)
+                                            )
+                                        )
+                                    }) {
+                                        Text(context.getString(R.string.send_email))
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Button(onClick = {
+                                        val clipboardManager =
+                                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                        val clip = ClipData.newPlainText(
+                                            "UserData", targetToString(stockTarget)
+                                        )
+                                        clipboardManager.setPrimaryClip(clip)
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.copied_to_clipboard),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }) {
+                                        Text(context.getString(R.string.copied_to_clipboard))
+                                    }
+                                }
+
+
+                            },
+                            confirmButton = {
+                                Button(onClick = { openShareStockNoteDialog.value = false }) {
+                                    Text("Close")
                                 }
                             })
                     }
@@ -693,6 +908,13 @@ fun ActionScreen(
                                                     var tml = contents.toMutableList()
                                                     tml.removeAt(selectedItemIndex.value)
                                                     contents = tml
+                                                    favorites = contents.map { it.isFavorite }
+                                                    tabStrings.clear()
+                                                    tabStrings.addAll(contents.map { stockTarget ->
+                                                        stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
+                                                            .map { it.title }.joinToString(";")})
+
+
                                                     showContextMenuIconsDialog.value = false
                                                 }
 
@@ -713,6 +935,11 @@ fun ActionScreen(
 
                                                     contents = tml
                                                     favorites = contents.map { it.isFavorite }
+                                                    tabStrings.clear()
+                                                    tabStrings.addAll(contents.map { stockTarget ->
+                                                        stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
+                                                            .map { it.title }.joinToString(";")})
+
 
                                                     stockTarget.isFavorite = newfavorite
 
@@ -749,6 +976,13 @@ fun ActionScreen(
                                                     }
 
                                                     contents = tml
+                                                    favorites = contents.map { it.isFavorite }
+                                                    tabStrings.clear()
+                                                    tabStrings.addAll(contents.map { stockTarget ->
+                                                        stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
+                                                            .map { it.title }.joinToString(";")})
+
+
 
                                                     viewModel.onEvent(
                                                         ActionViewEvent.onStockTargetTopPinned(
@@ -782,6 +1016,12 @@ fun ActionScreen(
                                                     }
 
                                                     contents = tml
+                                                    favorites = contents.map { it.isFavorite }
+                                                    tabStrings.clear()
+                                                    tabStrings.addAll(contents.map { stockTarget ->
+                                                        stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
+                                                            .map { it.title }.joinToString(";")})
+
 
                                                     ActionViewEvent.onStockTargetTopMoved(
                                                         stockTarget,
@@ -792,7 +1032,13 @@ fun ActionScreen(
                                                     showContextMenuIconsDialog.value = false
                                                 }
 
-                                                5 -> {//move bottom
+                                                5 -> {
+                                                    showContextMenuIconsDialog.value = false
+                                                    openShareStockNoteDialog.value = true
+
+                                                }
+
+                                                "move bottom".hashCode() -> {//move bottom
 
 
                                                     if (stockTarget.isTopPinned) {
@@ -806,6 +1052,13 @@ fun ActionScreen(
                                                     tml.add(stockTarget)
 
                                                     contents = tml
+                                                    favorites = contents.map { it.isFavorite }
+                                                    tabStrings.clear()
+                                                    tabStrings.addAll(contents.map { stockTarget ->
+                                                        stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
+                                                            .map { it.title }.joinToString(";")})
+
+
 
                                                     ActionViewEvent.onStockTargetTopMoved(
                                                         stockTarget,
@@ -814,11 +1067,9 @@ fun ActionScreen(
                                                     )
 
                                                     showContextMenuIconsDialog.value = false
-
                                                 }
 
                                                 6 -> { //group
-
 
                                                     showContextMenuIconsDialog.value = false
 
@@ -850,8 +1101,10 @@ fun ActionScreen(
                                                     }
 
                                                     var tabOld = stockTarget.tabs
+
                                                     stockTarget.tabs =
                                                         stockTarget.tabs.filter { it.title != selectedTab.title }
+
                                                     viewModel.onEvent(
                                                         ActionViewEvent.onItemTabEntitiesChanged(
                                                             stockTarget = stockTarget,
@@ -863,6 +1116,12 @@ fun ActionScreen(
 
                                                     contents = tml
                                                     favorites = contents.map { it.isFavorite }
+                                                    tabStrings.clear()
+                                                    tabStrings.addAll(contents.map { stockTarget ->
+                                                        stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
+                                                            .map { it.title }.joinToString(";")})
+
+
 
                                                     showContextMenuIconsDialog.value = false
                                                 }
@@ -883,8 +1142,30 @@ fun ActionScreen(
     }
 }
 
+fun targetToEmailContent(stockTarget: StockTarget): String {
+    return stockTarget.toString()
+}
 
-///////////////////////FIXME IMPLEMENT
+fun targetToMarkdown(stockTarget: StockTarget): String {
+    return stockTarget.toMarkdown()
+}
+
+private fun StockTarget.toMarkdown(): String {
+    return buildString {
+        appendLine("## ${this@toMarkdown.code}")
+        appendLine("### ${this@toMarkdown.name}")
+        appendLine("#### ${this@toMarkdown.tabs.joinToString(",") { it.title }}")
+        appendLine("#### ${this@toMarkdown.targetReasonList.joinToString(",") { it.title }}")
+        appendLine("#### ${this@toMarkdown.targetActionList.joinToString(",") { it.title }}")
+        appendLine("#### ${this@toMarkdown.comment}")
+    }
+}
+
+fun targetToString(stockTarget: StockTarget): String {
+    return stockTarget.toString()
+}
+
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AddStockTargetDialog(
@@ -1079,7 +1360,11 @@ fun CenteredTitle(title: String) {
 
 @Composable
 fun ListItem(
-    index: Int, stockTarget: StockTarget, isFavorite: Boolean, onClickToShowDialog: () -> Unit
+    index: Int,
+    stockTarget: StockTarget,
+    isFavorite: List<Boolean>,
+    itemString: List<String>,
+    onClickToShowDialog: () -> Unit
 ) {
 
     Row(
@@ -1117,7 +1402,7 @@ fun ListItem(
                 }
 
 
-                if (isFavorite) {
+                if (isFavorite[index]) {
                     Icon(
                         modifier = Modifier.size(16.dp),
                         imageVector = Icons.Default.Star,
@@ -1130,8 +1415,7 @@ fun ListItem(
 
         }
 
-        Text(text = stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
-            .map { it.title }.joinToString(";"), modifier = Modifier.padding(16.dp))
+        Text(text = itemString[index], modifier = Modifier.padding(16.dp))
 
         Icon(
             modifier = Modifier
@@ -1166,13 +1450,14 @@ fun IconGrid(
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
+            stringResource(id = R.string.make_profit)
             IconItem(
                 index = 0, onIconClick = { iconIndex ->
                     onIconClick(iconIndex)
                     isFavoriteInner = !isFavoriteInner
                 }, stockTarget, imageVectors[0], labelList[0], tint = Color.Black
             )
-            IconItem(
+            IconItem( // complete
                 index = 1,
                 onIconClick,
                 stockTarget,
@@ -1180,7 +1465,7 @@ fun IconGrid(
                 labelList[1],
                 tint = if (isFavoriteInner) Golden else Gray
             )
-            IconItem(
+            IconItem( //favorite
                 index = 2,
                 onIconClick = onIconClick,
                 stockTarget = stockTarget,
@@ -1211,16 +1496,15 @@ fun IconGrid(
                 tint = if (selectedItemIndex == 0) Gray else Color.Black,
                 enabled = selectedItemIndex != 0
             )
-            IconItem(//move bottom
+            IconItem(
                 index = 5,
                 onIconClick = onIconClick,
                 stockTarget = stockTarget,
                 imageVector = imageVectors[5],
                 label = labelList[5],
-                tint = if (selectedItemIndex >= itemSize - 1) Gray else Color.Black,
-                enabled = selectedItemIndex < (itemSize - 1)
+                tint = colors.primary,
 
-            )
+                )
             IconItem(//group
                 index = 6,
                 onIconClick = onIconClick,
@@ -1237,6 +1521,8 @@ fun IconGrid(
                 label = labelList[7],
                 tint = Color.Black
             )
+
+
         }
     }
 }
@@ -1247,12 +1533,12 @@ fun IconGrid(
 //)
 
 val labelList = listOf(
-    getString(R.string.delete_stock_target),
+    getString(R.string.complete),
     getString(R.string.string_special),
     getString(R.string.target_note),
     getString(R.string.pin_top),
     getString(R.string.move_top),
-    getString(R.string.move_bottom),
+    getString(R.string.share),
     getString(R.string.group),
     getString(R.string.remove_from_group),
 
@@ -1264,15 +1550,16 @@ val labelList = listOf(
 // 0 delete 1 special 2 note 3 pin top
 // 4  move top 5 move last  6 group(tab) 7 batch group(tab)
 val imageVectors = listOf(
-    Icons.Default.Delete,
+    Icons.Default.Check,
     Icons.Default.Star,
     Icons.Default.EditNote,
     Icons.Default.PushPin,
     Icons.Default.VerticalAlignTop,
-    Icons.Default.VerticalAlignBottom,
+    Icons.Default.Share,
     Icons.Default.Group,
-    Icons.Default.GroupOff
-)
+    Icons.Default.GroupOff,
+
+    )
 
 @Composable
 fun IconItem(

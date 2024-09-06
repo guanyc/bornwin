@@ -66,10 +66,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.guanyc.stock.discipline.R
 import com.guanyc.stock.discipline.domain.model.StockTarget
-import com.guanyc.stock.discipline.presentation.stocks.StockTargetPeriod
-import com.guanyc.stock.discipline.presentation.stocks.StockTargetPeriod.*
-import com.guanyc.stock.discipline.presentation.stocks.toInt
-import com.guanyc.stock.discipline.presentation.stocks.toStockTargetPeriod
+import com.guanyc.stock.discipline.util.StockTargetPeriod
+import com.guanyc.stock.discipline.util.StockTargetPeriod.*
+import com.guanyc.stock.discipline.util.toInt
+import com.guanyc.stock.discipline.util.toStockTargetPeriod
 import com.guanyc.stock.discipline.util.settings.OrderType
 import com.guanyc.stock.discipline.util.settings.OrderType.*
 import java.text.SimpleDateFormat
@@ -235,7 +235,8 @@ fun RecentStockCodesInStockNotesScreen(
             item {
                 //周期 或者时间的起始截止
                 //FIXME TODO PRO 时间起止文字表示  时间选择前后箭头
-                QueryDateRangeTabRow(StockTargetPeriod.entries,
+                QueryDateRangeTabRow(
+                    StockTargetPeriod.entries,
                     selectedStockTargetPeriod = selectedStockTargetPeriod,
                     onChange = {
 

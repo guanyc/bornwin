@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,10 +39,15 @@ import com.guanyc.stock.discipline.app.getString
 import com.guanyc.stock.discipline.domain.model.StockNote
 import com.guanyc.stock.discipline.domain.model.StockTarget
 import com.guanyc.stock.discipline.domain.model.TargetConstants
-import com.guanyc.stock.discipline.domain.model.tabActions
+import com.guanyc.stock.discipline.domain.model.tabOtherList
 import com.guanyc.stock.discipline.domain.model.tabReasons
+import com.guanyc.stock.discipline.domain.model.tabSpecialList
+import com.guanyc.stock.discipline.domain.model.tabWatchList
 import com.guanyc.stock.discipline.domain.model.targetActionList
+import com.guanyc.stock.discipline.domain.model.targetOtherListList
 import com.guanyc.stock.discipline.domain.model.targetReasonList
+import com.guanyc.stock.discipline.domain.model.targetSpecialListList
+import com.guanyc.stock.discipline.domain.model.targetWatchListList
 import com.guanyc.stock.discipline.presentation.main.components.TabEntity
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -63,6 +69,7 @@ fun TargetCardDialogEdit(
 
     var targetReasonList = remember { mutableStateListOf<TabEntity>() }
     var targetActionList = remember { mutableStateListOf<TabEntity>() }
+    var targetOtherList = remember { mutableStateListOf<TabEntity>() }
 
     if (stockTarget.targetReasonList.isNotEmpty()) {
         targetReasonList.clear()
@@ -72,6 +79,11 @@ fun TargetCardDialogEdit(
     if (stockTarget.targetActionList.isNotEmpty()) {
         targetActionList.clear()
         targetActionList.addAll(stockTarget.targetActionList)
+    }
+
+    if ((stockTarget.targetWatchListList + stockTarget.targetSpecialListList).isNotEmpty()) {
+        targetOtherList.clear()
+        targetOtherList.addAll(stockTarget.targetOtherListList)
     }
 
     var isOpportunityGiven by remember { mutableStateOf(stockTarget.isOpportunityGiven) }
@@ -127,7 +139,7 @@ fun TargetCardDialogEdit(
                 )
                 {
                     Text(
-                        stringResource(R.string.target_reasons),
+                        stringResource(R.string.reasons),
                         //modifier = Modifier.padding(2.dp),
                         //style = MaterialTheme.typography.body1
                     )
@@ -158,14 +170,11 @@ fun TargetCardDialogEdit(
                     maxItemsInEachRow = 3,
                 ) {
                     Text(
-                        stringResource(id = R.string.target_actions),
-                        //modifier = Modifier.padding(2.dp),
-                        //style = MaterialTheme.typography.body1
+                        stringResource(id = R.string.actions),
                     )
 
-
                     if (targetConstants != null) {
-                        targetConstants.tabActions.forEachIndexed { index, targetAction ->
+                        (targetConstants.tabWatchList + targetConstants.tabSpecialList).forEachIndexed { index, targetAction ->
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Checkbox(checked = targetActionList.contains(targetAction),
                                     onCheckedChange = { checked ->
@@ -182,6 +191,36 @@ fun TargetCardDialogEdit(
 
 
                 }//flowrow
+
+
+                //other tabentities
+                FlowRow(
+                    modifier = Modifier.padding(2.dp),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalArrangement = Arrangement.Top,
+                    maxItemsInEachRow = 3,
+                ) {
+                    Text(
+                        stringResource(id = R.string.others),
+                    )
+
+                    if (targetConstants != null) {
+                        targetConstants.tabOtherList.forEachIndexed { index, targetOther ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(checked = targetOtherList.contains(targetOther),
+                                    onCheckedChange = { checked ->
+                                        if (checked) {
+                                            targetOtherList.add(targetOther)
+                                        } else {
+                                            targetOtherList.remove(targetOther)
+                                        }
+                                    })
+                                Text(targetOther.title)
+                            }
+                        }
+                    }
+                }
+
 
                 Divider(thickness = 1.dp)
                 androidx.compose.foundation.layout.FlowRow(
@@ -318,7 +357,7 @@ fun TargetCardDialogEdit(
                         //targetReasonList = targetReasonList,
                         //targetActionList = targetActionList,
                         //FIXME 暂时先这样
-                        tabs = targetReasonList.plus(targetActionList),
+                        tabs = targetReasonList.plus(targetActionList).plus(targetOtherList),
                         stockTargetId = item.stockTargetId,
                         createDate = item.createDate,
                         isCompleted = isCompleted,

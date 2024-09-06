@@ -12,12 +12,22 @@ import androidx.room.PrimaryKey
 /**
  * 交易日志
  * 参考  onDelete = CASCADE, ref StockTarget 删除级联的关联对象
+ *
+ * 定义一个名为StockNote的Room data class 数据类
+ *
+ *
+ * 创建日期：2023年07月04日
+ * 作者：Guanyc
+ * 版本：1.0
+ * 描述：用于记录在某日的ref StockTarget标的的选择，后续操作，记录信息
+ *
  */
 @Entity(
     tableName = "stocknotes",
     indices = [Index(value=["createDate"], unique = true)]
 )
 data class StockNote(
+
 
     @Ignore
     var targetListVisible:Boolean = true,

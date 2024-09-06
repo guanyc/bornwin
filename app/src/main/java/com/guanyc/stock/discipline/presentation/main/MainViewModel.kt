@@ -1,5 +1,6 @@
 package com.guanyc.stock.discipline.presentation.main
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,6 +14,7 @@ import com.guanyc.stock.discipline.domain.model.StockNote
 import com.guanyc.stock.discipline.domain.use_case.settings.GetSettingsUseCase
 import com.guanyc.stock.discipline.domain.use_case.stocks.GetAllUncompletedStockNotesUseCase
 import com.guanyc.stock.discipline.domain.use_case.stocks.GetCompletedStockNotesInAWeekUseCase
+import com.guanyc.stock.discipline.domain.use_case.stocks.InsertStockNoteUseCase
 
 import com.guanyc.stock.discipline.theme.Rubik
 import com.guanyc.stock.discipline.util.Constants
@@ -27,13 +29,25 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import javax.annotation.Nullable
 import javax.inject.Inject
+
+sealed class DashboardEvent {
+    object InitAll : DashboardEvent()
+    object ErrorDisplayed : DashboardEvent()
+
+    data class  insertStockNote(val stockNote: StockNote): DashboardEvent()
+    companion object {}
+
+}
+
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val getSettings: GetSettingsUseCase,
     private val getAllUncompletedStockNotes: GetAllUncompletedStockNotesUseCase,
     private val  getCompletedStockNotesInAWeek: GetCompletedStockNotesInAWeekUseCase,
+    private val insertStockNoteUseCase: InsertStockNoteUseCase,
 ) : ViewModel() {
 
     var uiState by mutableStateOf(UiState())
@@ -53,14 +67,30 @@ class MainViewModel @Inject constructor(
     val blockScreenshots =
         getSettings(booleanPreferencesKey(Constants.BLOCK_SCREENSHOTS_KEY), false)
 
-    fun onDashboardEvent(event: DashboardEvent) {
+    fun onEvent(event: DashboardEvent) {
         when (event) {
             DashboardEvent.InitAll -> collectDashboardData()
 
+            DashboardEvent.ErrorDisplayed -> {
+                uiState = uiState.copy(error = null)
+            }
+
+            is DashboardEvent.insertStockNote -> viewModelScope.launch {
+                try {
+                    val id = insertStockNoteUseCase(stockNote = event.stockNote)
+
+                    Log.d("MainViewModel", "insertStockNote: $id")
+                    onEvent(DashboardEvent.InitAll)
+                }catch (e: Exception){
+                    Log.e("MainViewModel", "insertStockNote: ${e.message}")
+                    uiState = uiState.copy(error = e.message)
+                }
+            }
         }
     }
 
     data class UiState(
+        @Nullable val error: String? = null,
         val unCompleted: List<StockNote> = emptyList(),
         val completed: List<StockNote> = emptyList(),
     )
@@ -69,16 +99,6 @@ class MainViewModel @Inject constructor(
 
     private fun collectDashboardData() = viewModelScope.launch {
         combine(
-            getSettings(
-                intPreferencesKey(Constants.ORDER_KEY),
-                Order.DateModified(OrderType.ASC()).toInt()
-            ),
-            getSettings(
-                booleanPreferencesKey(Constants.SHOW_COMPLETED_TASKS_KEY),
-                false
-            ),
-
-
             //getAllTasks
             getAllUncompletedStockNotes(),
 
@@ -86,7 +106,7 @@ class MainViewModel @Inject constructor(
             getCompletedStockNotesInAWeek(),
 
 
-        ) { order, showCompleted, unCompleted, completed->
+        ) {   unCompleted, completed->
 
             uiState = uiState.copy(
 

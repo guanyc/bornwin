@@ -6,13 +6,13 @@ import androidx.room.ForeignKey
 
 import androidx.room.ForeignKey.Companion.CASCADE
 import androidx.room.Ignore
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.guanyc.stock.discipline.presentation.main.components.TAB_TYPE
 import com.guanyc.stock.discipline.presentation.main.components.TabEntity
 
 
-
-val StockTarget.targetActionList:  List<TabEntity>
+val StockTarget.targetActionList: List<TabEntity>
     get() {
         return tabs.filter { it.tabType == TAB_TYPE.TAB_ACTION }
     }
@@ -26,12 +26,23 @@ val StockTarget.targetWatchListList: List<TabEntity>
         return tabs.filter { it.tabType == TAB_TYPE.TAB_WATCHLIST }
     }
 
+val StockTarget.targetSpecialListList: List<TabEntity>
+    get() {
+        return tabs.filter { it.tabType == TAB_TYPE.TAB_SPECIAL }
+    }
+
+val StockTarget.targetOtherListList: List<TabEntity>
+    get() {
+        return tabs.filter { it.tabType == TAB_TYPE.TAB_SPECIAL || it.tabType == TAB_TYPE.TAB_WATCHLIST }
+    }
+
 
 /**
  * @param stockNoteId
  */
 @Entity(
     tableName = "targets",
+    //indices = [Index(value=["code, createDate"], unique = true)],
     foreignKeys = [
         ForeignKey(
             entity = StockNote::class,
@@ -49,13 +60,12 @@ data class StockTarget(
     var stockTargetId: Long = 0,
 
 
-    @ColumnInfo(name="stockNoteId", index=true)
+    @ColumnInfo(name = "stockNoteId", index = true)
     var stockNoteId: Long = 0,
 
     //创建日期 和 stocknote的createDate是一样的，
     //统一日期下的 stocktarget属于相同的一个stocknote
     var createDate: String = "",
-
 
 
     //timemillies
@@ -84,7 +94,14 @@ data class StockTarget(
 
     var tabs: List<TabEntity> = emptyList(),
 
+    /**
+     * 市场给予了操作机会，操作的理由 targetReasonList 之一
+     */
     var targetReasonActed: String = "",
+
+    /**
+     * 市场给予了操作机会，实施的操作 targetActionList 之一
+     */
     var targetActionActed: String = "",
 
     //var tabsPinned:List<TabEntity> = emptyList(),
@@ -107,18 +124,18 @@ data class StockTarget(
     var stockPositionValuePercentage: Double = 0.0,
 
     // 持有股票的仓位
-    var stockPositionValueChange:Double = 0.0,
+    var stockPositionValueChange: Double = 0.0,
 
 
     // 后续给机会了么， 如果没给机会的话, 这个targe就结束了?
     // @see isCompleted 设置为true ，
     // ？？后续还是标的的话 重新开始
-    var isOpportunityGiven:Boolean =false,
+    var isOpportunityGiven: Boolean = false,
 
     // 给机会 就应该买入/操作 真的操作了么？
     // 有可能排队没排上, 没操作的话 也结束了
     // 排队没排上和没操作一个效果
-    var isPlanActed:Boolean = false,
+    var isPlanActed: Boolean = false,
 
     //FIXME
     //给了机会 操作了 是否成交了
@@ -131,12 +148,12 @@ data class StockTarget(
     /**
      * 操作最终,获利情况 盈利true 亏损 false
      */
-    var isProfitable:Boolean = false,
+    var isProfitable: Boolean = false,
 
     /**
-     * 获利比例
+     * 获利亏损的比例
      */
-    var profitOrLossPercentage : Double = 0.0,
+    var profitOrLossPercentage: Double = 0.0,
 
     /**
      *
@@ -147,23 +164,24 @@ data class StockTarget(
     /**
      * 是否已经完结
      */
-    var isCompleted:Boolean = false,
+    var isCompleted: Boolean = false,
 
     /**
      * 注释
      *
      */
-    var comment:String = "",
+    var comment: String = "",
 
     /**
      * 特别关注
      */
-    var isFavorite:Boolean = false,
+    var isFavorite: Boolean = false,
 
     @Ignore
-    var isTopPinned:Boolean = false,
+    var isTopPinned: Boolean = false,
 
-    var isMoveTop:Boolean = false,
+    @Ignore
+    var isMoveTop: Boolean = false,
 
     )
 

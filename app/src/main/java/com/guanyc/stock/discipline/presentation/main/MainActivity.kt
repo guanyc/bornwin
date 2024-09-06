@@ -70,6 +70,7 @@ class MainActivity : ComponentActivity() {
                     startUpScreenSettings = viewModel.defaultStartUpScreen.first()
                 }
             }
+
             LaunchedEffect(blockScreenshots.value) {
                 if (blockScreenshots.value) {
                     window.setFlags(

@@ -30,36 +30,5 @@ open class Metadata(
 }
 
 
-/*
-data class TargetAction(
-    val id: UUID = UUID.randomUUID(),
-    val title: String,
-    val description: String = "",
-    val note: String = "",
-    val enabled: Boolean = true,
-    val dispalyInWatchList: Boolean = true,
-)*/
-
-/*
-data class TargetWatchList(
-    val id: UUID = UUID.randomUUID(),
-    val title: String = "",
-    val description: String = "",
-    val note: String = "",
-    val enabled: Boolean = true,
-    val dispalyInWatchList: Boolean = true,
-    val isSpecial: Boolean = false,
-)
-
-data class TargetSpecialList(
-    val id: UUID = UUID.randomUUID(),
-    val title: String = "",
-    val description: String = "",
-    val note: String = "",
-    val enabled: Boolean = true,
-    val dispalyInWatchList: Boolean = true,
-    val isSpecial: Boolean = true,
-)
-*/
 
 

@@ -41,9 +41,7 @@ import com.guanyc.stock.discipline.theme.LightGray
 import com.guanyc.stock.discipline.util.Constants
 import com.guanyc.stock.discipline.util.settings.StockNoteColor
 
-val TAG: String = "StockDashBoardWidget"
-
-@OptIn(ExperimentalPermissionsApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 
 @Composable
 fun StockDashBoardWidget(
@@ -59,36 +57,48 @@ fun StockDashBoardWidget(
     Card(
         shape = RoundedCornerShape(24.dp),
         elevation = 8.dp,
-        modifier = Modifier.fillMaxWidth().padding(8.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
     ) {
         val context = LocalContext.current
         val isDark = !MaterialTheme.colors.isLight
 
         Column(
-            modifier = modifier.clickable { onclick() }.padding(8.dp)
+            modifier = modifier
+                .clickable { onclick() }
+                .padding(8.dp)
         ) {
 
-            //第一行
+            //第一行 FIXME remove this to the top
             Row(
-                Modifier.fillMaxWidth().padding(4.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     stringResource(R.string.stocknote_title), style = MaterialTheme.typography.body1
                 )
+
                 Icon(painterResource(R.drawable.ic_add),
                     stringResource(R.string.add_stock_daily_note),
-                    modifier = Modifier.size(18.dp).clickable {
-                        onAddStockNoteClicked()
-                    })
+                    modifier = Modifier
+                        .size(18.dp)
+                        .clickable {
+                            onAddStockNoteClicked()
+                        })
             }
 
             //间隔
             Spacer(Modifier.height(8.dp))
 
             FlowRow(
-                modifier = Modifier.padding(2.dp).fillMaxSize().clip(RoundedCornerShape(20.dp))
+                modifier = Modifier
+                    .padding(2.dp)
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(20.dp))
                     .background(if (isDark) Color.DarkGray else LightGray),
                 horizontalArrangement = Arrangement.Start,
                 verticalArrangement = Arrangement.Top,
@@ -100,13 +110,16 @@ fun StockDashBoardWidget(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "未完结: "
+                        text = stringResource(R.string.uncompleted)
                     )
                 }
                 unCompleted.forEach { stockNote ->
                     Row(
-                        modifier = Modifier.clip(RoundedCornerShape(12.dp))
-                            .background(StockNoteColor.ORANGE.color).padding(12.dp).clickable {
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(StockNoteColor.ORANGE.color)
+                            .padding(12.dp)
+                            .clickable {
                                 val noteDetailSreen =
                                     Screen.StockDailyNoteDetailScreen.route.replace(
                                         oldValue = "{${Constants.STOCK_DAILY_NOTE_ID_ARG}}",

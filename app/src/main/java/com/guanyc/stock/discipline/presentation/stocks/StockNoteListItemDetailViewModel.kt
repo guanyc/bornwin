@@ -136,7 +136,7 @@ class StockNoteListItemDetailViewModel @Inject constructor(
 
                 getTargetConstants(),
 
-            ) { order, targetConstants ->
+            ) { order: Int, targetConstants ->
 
 
 

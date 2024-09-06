@@ -4,7 +4,7 @@
     <string name="reminders_channel_description">任务提醒</string>
     <string name="reminders_channel_name">提醒</string>
     <string name="complete">完成</string>
-    <string name="dashboard">概要</string>
+    <string name="dashboard">交易日志</string>
     <string name="settings">设置</string>
     <string name="spaces">空间</string>
     <string name="app_theme">主题</string>
@@ -14,7 +14,7 @@
     <string name="start_up_screen">开始页面</string>
     <string name="about">关于</string>
     <string name="app_version">软件版本</string>
-    <string name="project_on_github">GitHub项目</string>
+    <string name="project_on_github">项目</string>
     <string name="privacy_policy">隐私政策</string>
     <string name="product">产品</string>
     <string name="notes">笔记</string>
@@ -166,7 +166,7 @@
     <string name="delete">删除</string>
     <string name="code">股票代码</string>
     <string name="stock_name">标的简称</string>
-    <string name="add_stock_target">add stoch target</string>
+    <string name="add_stock_target">添加标的</string>
     <string name="color_red">红色</string>
     <string name="color_blue">蓝色</string>
     <string name="color_green">绿色</string>
@@ -179,8 +179,8 @@
     <string name="update">更新</string>
     <string name="delete_stock_note_confirmation_message">您确认要删除如下的记录么: \n \"%1$s\""?</string>
 
-    <string name="edit">edit</string>
-    <string name="more">detail</string>
+    <string name="edit">编辑</string>
+    <string name="more">详情</string>
     <string name="indexString">大盘</string>
     <string name="positionStr">仓位</string>
     <string name="ProfitOrLossPercentage">盈亏比例</string>
@@ -201,7 +201,6 @@
     <string name="update_target_reason">更新标的理由</string>
     <string name="delete_target_reason">删除标的理由</string>
     <string name="edit_target_reason">编辑变量信息</string>
-    <string name="add_target_action_element">添加标的操作元素</string>
     -->
 
 
@@ -290,5 +289,24 @@
     <string name="string_made_profit">盈利</string>
     <string name="string_made_loss">亏损</string>
     <string name="string_action_review">note</string>
+    <string name="actions">计划</string>
+    <string name="reasons">理由</string>
+    <string name="others">其他</string>
+    <string name="choose_how_you_d_like_to_share_the_information">选择分享格式:</string>
+    <string name="share_as_text">文本字符串</string>
+    <string name="share_as_markdown">Markdown格式</string>
+    <string name="send_email">Email</string>
+    <string name="copied_to_clipboard">Copy到clipboard</string>
+    <string name="string_act_plan">按计划交易</string>
+    <string name="uncompleted">"未完结: "</string>
+    <string name="sort_tab_items">Tab条目排序</string>
+    <string name="new_tabentity_item">新标签项目</string>
+    <string name="new_target_createdate_choice">标的创建日期</string>
+    <string name="NewTargetCreateDateChoice_lastest">最后的日期</string>
+    <string name="NewTargetCreateDateChoice_today">今天</string>
+    <string name="latest">最后的日期</string>
+    <string name="today">今天</string>
+    <string name="stocktarget_already_exists">%1$s 已经存在!</string>
+    <string name="download">下载</string>
 
 </resources>

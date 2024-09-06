@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "81ce88e0e0d0d6e7d9cc9323d2e0d170",
+    "identityHash": "8c5e78a001553e06a304e2e7456795f0",
     "entities": [
       {
         "tableName": "targetholder",
@@ -104,7 +104,7 @@
       },
       {
         "tableName": "targets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`stockTargetId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `stockNoteId` INTEGER NOT NULL, `createDate` TEXT NOT NULL, `updateDate` INTEGER NOT NULL, `code` TEXT NOT NULL, `name` TEXT NOT NULL, `tabs` TEXT NOT NULL, `targetReasonActed` TEXT NOT NULL, `targetActionActed` TEXT NOT NULL, `hasPosition` INTEGER NOT NULL, `stockPosition` REAL NOT NULL, `stockPositionPercentage` REAL NOT NULL, `stockPositionValue` REAL NOT NULL, `stockPositionValuePercentage` REAL NOT NULL, `stockPositionValueChange` REAL NOT NULL, `isOpportunityGiven` INTEGER NOT NULL, `isPlanActed` INTEGER NOT NULL, `isProfitable` INTEGER NOT NULL, `profitOrLossPercentage` REAL NOT NULL, `actionReview` TEXT NOT NULL, `isCompleted` INTEGER NOT NULL, `comment` TEXT NOT NULL, `isFavorite` INTEGER NOT NULL, `isMoveTop` INTEGER NOT NULL, FOREIGN KEY(`stockNoteId`) REFERENCES `stocknotes`(`stockNoteId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`stockTargetId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `stockNoteId` INTEGER NOT NULL, `createDate` TEXT NOT NULL, `updateDate` INTEGER NOT NULL, `code` TEXT NOT NULL, `name` TEXT NOT NULL, `tabs` TEXT NOT NULL, `targetReasonActed` TEXT NOT NULL, `targetActionActed` TEXT NOT NULL, `hasPosition` INTEGER NOT NULL, `stockPosition` REAL NOT NULL, `stockPositionPercentage` REAL NOT NULL, `stockPositionValue` REAL NOT NULL, `stockPositionValuePercentage` REAL NOT NULL, `stockPositionValueChange` REAL NOT NULL, `isOpportunityGiven` INTEGER NOT NULL, `isPlanActed` INTEGER NOT NULL, `isProfitable` INTEGER NOT NULL, `profitOrLossPercentage` REAL NOT NULL, `actionReview` TEXT NOT NULL, `isCompleted` INTEGER NOT NULL, `comment` TEXT NOT NULL, `isFavorite` INTEGER NOT NULL, FOREIGN KEY(`stockNoteId`) REFERENCES `stocknotes`(`stockNoteId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "stockTargetId",
@@ -243,12 +243,6 @@
             "columnName": "isFavorite",
             "affinity": "INTEGER",
             "notNull": true
-          },
-          {
-            "fieldPath": "isMoveTop",
-            "columnName": "isMoveTop",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
@@ -350,7 +344,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '81ce88e0e0d0d6e7d9cc9323d2e0d170')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8c5e78a001553e06a304e2e7456795f0')"
     ]
   }
 }

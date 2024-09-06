@@ -72,7 +72,6 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -89,6 +88,7 @@ import com.guanyc.stock.discipline.domain.model.StockNote
 import com.guanyc.stock.discipline.domain.model.StockNoteWithTargetLists
 import com.guanyc.stock.discipline.domain.model.StockTarget
 import com.guanyc.stock.discipline.domain.model.tabActions
+import com.guanyc.stock.discipline.domain.model.tabOtherList
 import com.guanyc.stock.discipline.domain.model.tabReasons
 import com.guanyc.stock.discipline.presentation.main.components.TAB_TYPE
 import com.guanyc.stock.discipline.presentation.main.components.TabEntity
@@ -107,17 +107,6 @@ import java.util.Calendar
 
 //https://stackoverflow.com/questions/2928902/how-do-i-detect-a-cancel-click-of-the-datepicker-dialog
 
-
-data class User(
-    val name: String,
-    val age: Int,
-    val emails: List<Email>
-)
-
-data class Email(
-    val address: String,
-    val type: String // e.g., "personal", "work"
-)
 
 fun userToString(item: StockNoteWithTargetLists): String {
     return buildString {
@@ -533,7 +522,8 @@ fun StockNoteListItemDetailScreen(
             ) {
                 Text(
                     //text = stringResource(string.choices),
-                    text = "添加标的", style = MaterialTheme.typography.h6
+                    text = stringResource(string.add_stock_target),
+                    style = MaterialTheme.typography.h6
                     //modifier = Modifier.padding(vertical = 8.dp)
                 )
 
@@ -562,13 +552,13 @@ fun StockNoteListItemDetailScreen(
             //TargetRowsTableHead()
 
             Spacer(Modifier.height(12.dp))
-            if (targets != null && targets.isNotEmpty()) {
+            if (targets.isNotEmpty()) {
 
                 TargetRows(
                     targetListIndex, targets, viewModel
                 )
 
-                if (editTargetDialogValue.value) {
+                /*if (editTargetDialogValue.value) {
                     DialogEditTargetDetail(
                         targets,
                         stockNoteId,
@@ -577,7 +567,7 @@ fun StockNoteListItemDetailScreen(
                         uiState,
                         viewModel
                     )
-                }
+                }*/
             }
 
 
@@ -641,7 +631,7 @@ fun StockNoteListItemDetailScreen(
             title = { Text(stringResource(string.share)) },
             text = {
                 Column {
-                    Text("Choose how you'd like to share the information:")
+                    Text(stringResource(string.choose_how_you_d_like_to_share_the_information))
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Button(onClick = {
@@ -650,9 +640,10 @@ fun StockNoteListItemDetailScreen(
                             putExtra(Intent.EXTRA_TEXT, userToString(uiState.item!!))
                             type = "text/plain"
                         }
-                        context.startActivity(Intent.createChooser(intent, "Share as Text"))
+                        context.startActivity(Intent.createChooser(intent,
+                            context.getString(string.share_as_text)))
                     }) {
-                        Text("Share as String")
+                        Text(context.getString(string.share_as_text))
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -663,9 +654,10 @@ fun StockNoteListItemDetailScreen(
                             putExtra(Intent.EXTRA_TEXT, userToMarkdown(uiState.item!!))
                             type = "text/markdown"
                         }
-                        context.startActivity(Intent.createChooser(intent, "Share as Markdown"))
+                        context.startActivity(Intent.createChooser(intent,
+                            context.getString(string.share_as_markdown)))
                     }) {
-                        Text("Share as Markdown")
+                        Text(context.getString(string.share_as_markdown))
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -673,14 +665,15 @@ fun StockNoteListItemDetailScreen(
                     Button(onClick = {
                         val intent = Intent().apply {
                             action = Intent.ACTION_SEND
-                            putExtra(Intent.EXTRA_EMAIL, arrayOf("recipient@example.com"))
+                            putExtra(Intent.EXTRA_EMAIL, arrayOf(""))
                             putExtra(Intent.EXTRA_SUBJECT, "User Information")
                             putExtra(Intent.EXTRA_TEXT, userToEmailContent(uiState.item!!))
                             type = "message/rfc822"
                         }
-                        context.startActivity(Intent.createChooser(intent, "Send Email"))
+                        context.startActivity(Intent.createChooser(intent,
+                            context.getString(string.send_email)))
                     }) {
-                        Text("Share as Email")
+                        Text(context.getString(string.send_email))
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -690,9 +683,10 @@ fun StockNoteListItemDetailScreen(
                             context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         val clip = ClipData.newPlainText("UserData", userToString(uiState.item!!))
                         clipboardManager.setPrimaryClip(clip)
-                        Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context,
+                            context.getString(string.copied_to_clipboard), Toast.LENGTH_SHORT).show()
                     }) {
-                        Text("Copy to Clipboard")
+                        Text( context.getString(string.copied_to_clipboard))
                     }
                 }
 
@@ -1068,6 +1062,7 @@ fun DialogAddNewTarget(
 
     var targetReasonList = remember { mutableStateListOf<TabEntity>() }
     var targetActionList = remember { mutableStateListOf<TabEntity>() }
+    var targetOtherList = remember { mutableStateListOf<TabEntity>() }
 
     AlertDialog(
         //shape = RoundedCornerShape(25.dp),
@@ -1092,7 +1087,7 @@ fun DialogAddNewTarget(
                         onValueChange = {
                             name.value = it
                         },
-                        label = { Text(stringResource(R.string.stock_name))},
+                        label = { Text(stringResource(R.string.stock_name)) },
                         modifier = Modifier
                             .padding(2.dp)
                             .weight(4f),
@@ -1156,6 +1151,7 @@ fun DialogAddNewTarget(
                         style = MaterialTheme.typography.body1
                     )
                 }
+
                 FlowRow(
                     modifier = Modifier.padding(2.dp),
                     horizontalArrangement = Arrangement.Start,
@@ -1182,9 +1178,46 @@ fun DialogAddNewTarget(
 
                 }//flowrow
 
+                Row(
+                    modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        stringResource(id = R.string.others),
+                        modifier = Modifier.padding(2.dp),
+                        style = MaterialTheme.typography.body1
+                    )
+                }
+
+                FlowRow(
+                    modifier = Modifier.padding(2.dp),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalArrangement = Arrangement.Top
+                ) {
+
+                    if (uiState.targetConstants != null) {
+                        uiState.targetConstants.tabOtherList.forEachIndexed { index, meta ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(checked = targetOtherList.contains(meta),
+                                    onCheckedChange = { checked ->
+                                        if (checked) {
+                                            targetOtherList.add(
+                                                meta
+                                            )
+                                        } else {
+                                            targetOtherList.remove(meta)
+                                        }
+                                    })
+                                Text(meta.title)
+                            }
+                        }
+                    }
+
+                }//flowrow
+
 
             }
         },
+
 
         confirmButton = {
             Button(colors = ButtonDefaults.buttonColors(backgroundColor = Color.Green),
@@ -1198,7 +1231,7 @@ fun DialogAddNewTarget(
 
                         createDate = createDate,
                         //FIXME 暂时先这样
-                        tabs = targetActionList.plus(targetReasonList),
+                        tabs = targetActionList.plus(targetReasonList).plus(targetOtherList),
                     )
 
                     Log.d("stocktarget", item.toString())

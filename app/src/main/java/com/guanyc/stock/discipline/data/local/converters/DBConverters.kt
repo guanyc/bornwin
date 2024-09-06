@@ -7,6 +7,7 @@ import com.guanyc.stock.discipline.domain.model.StockTarget
 
 import com.guanyc.stock.discipline.presentation.main.components.TabEntity
 import com.guanyc.stock.discipline.util.BackupUtil.toJson
+import com.guanyc.stock.discipline.util.diary.Mood
 
 class DBConverters {
 
@@ -67,7 +68,7 @@ class DBConverters {
     }
 
 
-    /*
+
 
     @TypeConverter
     fun toMood(value: Int) = enumValues<Mood>()[value]
@@ -75,5 +76,5 @@ class DBConverters {
     @TypeConverter
     fun fromMood(value: Mood) = value.ordinal
 
-     */
+
 }

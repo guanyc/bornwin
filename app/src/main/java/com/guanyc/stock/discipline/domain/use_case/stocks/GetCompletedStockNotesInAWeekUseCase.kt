@@ -10,7 +10,5 @@ class GetCompletedStockNotesInAWeekUseCase  @Inject constructor(
 ) {
     operator fun invoke(): Flow<List<StockNote>> {
         return stockNoteRepository.getCompletedStockNotesInAWeek()
-
-
     }
 }

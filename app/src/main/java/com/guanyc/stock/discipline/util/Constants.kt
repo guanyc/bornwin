@@ -2,6 +2,10 @@ package com.guanyc.stock.discipline.util
 
 object Constants {
 
+
+    const val Download_LINK: String = "https://pan.baidu.com/s/1-LIRhI2B_wjD5t5mv-Ub_w?pwd=born"
+    const val NEW_TARGET_CREATEDATE_CHOICE_KEY: String="createdate_for_new_stock_target_choice"
+
     const val KEY_TAB_TOPPED: String ="tab_topped"
     const val KEY_TAB_PINNED: String = "tab_pinned_for"
     const val KEY_TAB_ORDERS: String = "tab_orders"

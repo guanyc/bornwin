@@ -117,7 +117,7 @@ fun TabEntityEditorScreen(
             }, onItemAdded = { newItem ->
                 viewModel.onEvent(ActionViewEvent.addNewTabEntity(newItem))
             }, onItemDeleted = { itemDeleted: TabEntity, index: Int ->
-                viewModel.onEvent(ActionViewEvent.onItemDeleted(itemDeleted,index))
+                viewModel.onEvent(ActionViewEvent.onItemDeleted(itemDeleted, index))
 
             }, onItemsReordered = { draggingAction, draggingIndex, newItems: List<TabEntity> ->
                 //tabs.toMutableList().clear(); tabs.toMutableList().addAll(newItems);
@@ -167,7 +167,7 @@ private fun itemList(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Reorder Items",
+                    text = stringResource(R.string.sort_tab_items),
                     style = MaterialTheme.typography.h6,
                     modifier = Modifier.padding(16.dp)
                 )
@@ -327,7 +327,7 @@ private fun itemList(
                         onValueChange = {
                             newItem = it
                         },
-                        label = { Text("New WatchList Item") },
+                        label = { Text(stringResource(R.string.new_tabentity_item)) },
                         modifier = Modifier
                             .weight(1f)
                             .padding(16.dp)
@@ -448,17 +448,21 @@ fun EditStringDialog(
     val isValid = remember { mutableStateOf(!initialValue.isEmpty()) }
 
     AlertDialog(onDismissRequest = onDismissRequest,
-        title = { Text("Edit String") },
+        title = { Text(stringResource(id = R.string.edit)) },
         text = {
             Column(modifier = Modifier.padding(24.dp)) {
                 OutlinedTextField(value = text, onValueChange = {
                     text = it
                     isValid.value = it.isNotBlank()
-                }, label = { Text("Enter your text") }, isError = !isValid.value
+                }, label = { Text(stringResource(id = R.string.enter_your_text)) },
+                    isError = !isValid.value
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 if (!isValid.value) {
-                    Text(text = "Text cannot be empty", color = MaterialTheme.colors.error)
+                    Text(
+                        text = stringResource(id = R.string.text_canot_be_empty),
+                        color = MaterialTheme.colors.error
+                    )
                 }
             }
         },
@@ -490,7 +494,7 @@ fun EditStringDialog(
 fun PreviewEditStringDialog() {
     var text by remember { mutableStateOf("") }
     EditStringDialog(
-        initialValue = getString(R.string.initial_value) ,
+        initialValue = getString(R.string.initial_value),
         onDismissRequest = {},
         onSave = { newText ->
             text = newText

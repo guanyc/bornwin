@@ -3,20 +3,25 @@ package com.guanyc.stock.discipline.util.settings
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import com.guanyc.stock.discipline.R
+import com.guanyc.stock.discipline.app.getString
 import com.guanyc.stock.discipline.theme.Blue
 import com.guanyc.stock.discipline.theme.Green
 import com.guanyc.stock.discipline.theme.Orange
 import com.guanyc.stock.discipline.theme.Purple
 import com.guanyc.stock.discipline.theme.Red
 import com.guanyc.stock.discipline.theme.Rubik
-import com.guanyc.stock.discipline.app.getString
-import com.guanyc.stock.discipline.R
 
 
 enum class ThemeSettings(val value: Int) {
     LIGHT(0),
     DARK(1),
     AUTO(2)
+}
+
+enum class NewTargetCreateDateChoice(val value: Int) {
+    LATEST(0),
+    TODAY(1),
 }
 
 enum class StartUpScreenSettings(val value: Int) {
@@ -162,6 +167,7 @@ fun Order.toInt(): Int {
                 is Order.Priority -> 3
             }
         }
+
         is OrderType.DESC -> {
             when (this) {
                 //is Order.Alphabetical -> 4

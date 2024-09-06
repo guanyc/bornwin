@@ -84,9 +84,10 @@ fun TargetCard(
     var targetReasonList = remember { mutableStateListOf<TabEntity>() }
     var targetActionList: SnapshotStateList<TabEntity> =
         remember { mutableStateListOf<TabEntity>() }
+    var targetSpecialList = remember { mutableStateListOf<TabEntity>() }
+    var targetWatchListList = remember { mutableStateListOf<TabEntity>() }
 
     if (stockTarget.targetReasonList.isNotEmpty()) {
-
         targetReasonList.clear()
         targetReasonList.addAll(stockTarget.targetReasonList)
     }
@@ -259,32 +260,30 @@ fun TargetCard(
 
                     Text(
                         textAlign = TextAlign.Center,
-                        text = "加标的原因:",
+                        text = stringResource(id = R.string.reasons),
                         style = MaterialTheme.typography.body1.copy(color = Color.White)
                     )
 
-                    var tc = targetConstants
+                    val tc = targetConstants
 
-                    if (tc != null) {
-                        tc.tabReasons.forEachIndexed { index, meta ->
-                            if (targetReasonList.contains(meta)) {
-                                Row(
-                                    horizontalArrangement = Arrangement.SpaceEvenly,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Checkbox(enabled = false,
-                                        checked = targetReasonList.contains(meta),
-                                        onCheckedChange = { checked ->
-                                            if (checked) {
-                                                //reasonList.add(index)
-                                            } else {
-                                                //reasonList.remove(index)
-                                            }
-                                        })
-                                    Text(meta.title)
-                                }
-
+                    tc.tabReasons.forEachIndexed { index, meta ->
+                        if (targetReasonList.contains(meta)) {
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(enabled = false,
+                                    checked = targetReasonList.contains(meta),
+                                    onCheckedChange = { checked ->
+                                        if (checked) {
+                                            //reasonList.add(index)
+                                        } else {
+                                            //reasonList.remove(index)
+                                        }
+                                    })
+                                Text(meta.title)
                             }
+
                         }
                     }
 
@@ -301,7 +300,7 @@ fun TargetCard(
                 ) {
                     Text(
                         textAlign = TextAlign.Center,
-                        text = "预期操作:",
+                        text = stringResource(id = R.string.actions),
                         style = MaterialTheme.typography.body1.copy(color = Color.White),
                     )
 
@@ -348,7 +347,7 @@ fun TargetCard(
 
                         Text(
                             //textAlign = TextAlign.Center,
-                            text = "实操:",
+                            text = stringResource(id = R.string.action),
                             style = MaterialTheme.typography.body1.copy(color = Color.White),
                         )
 
@@ -360,7 +359,7 @@ fun TargetCard(
                                 }
                             })
                         Text(
-                            text = "市场给机会",
+                            text = stringResource(id = R.string.string_given_opportunity),
                             //style = MaterialTheme.typography.body2.copy(color = Color.White),
                         )
                     }
@@ -374,7 +373,7 @@ fun TargetCard(
                             checked = stockTarget.isPlanActed,
                             onCheckedChange = {})
                         Text(
-                            text = "按计划交易",
+                            text =  stringResource(id = R.string.string_act_plan),
                             //style = MaterialTheme.typography.body2.copy(color = Color.White),
                         )
                     }
@@ -390,7 +389,9 @@ fun TargetCard(
                         ) {
 
                             Text(
-                                text = if (stockTarget.isProfitable) "盈利" else "亏损",
+                                text = if (stockTarget.isProfitable) stringResource(id = R.string.make_profit) else stringResource(
+                                    id = R.string.make_loss
+                                ),
                                 //style = MaterialTheme.typography.body2.copy(color = Color.White),
                                 modifier = Modifier.weight(2f)
                             )
@@ -403,7 +404,7 @@ fun TargetCard(
                             )
 
                             Text(
-                                "盈亏比例:", modifier = Modifier.weight(2f)
+                                stringResource(id = R.string.profit_loss_ratio), modifier = Modifier.weight(2f)
                             )
                             OutlinedTextField(
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -423,7 +424,7 @@ fun TargetCard(
                 if (stockTarget.actionReview.isNotEmpty()) {
                     Text(
                         //textAlign = TextAlign.Center,
-                        text = "备注:",
+                        text = stringResource(id = R.string.action_review),
                         style = MaterialTheme.typography.body1.copy(color = Color.White),
                     )
                     Divider()

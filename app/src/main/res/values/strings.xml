@@ -4,7 +4,7 @@
     <string name="reminders_channel_description">Notification channel for sending tasks reminders notification</string>
     <string name="reminders_channel_name">Reminders</string>
     <string name="complete">Complete</string>
-    <string name="dashboard">Dashboard</string>
+    <string name="dashboard">StockNote List</string>
     <string name="settings">Settings</string>
     <string name="spaces">Space Card</string>
     <string name="app_theme">App theme</string>
@@ -14,7 +14,7 @@
     <string name="start_up_screen">Startup screen</string>
     <string name="about">About</string>
     <string name="app_version">App version</string>
-    <string name="project_on_github">Project on GitHub</string>
+    <string name="project_on_github">Project</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="product">Product</string>
     <string name="notes">Notes</string>
@@ -291,5 +291,24 @@
     <string name="string_made_profit">get profit</string>
     <string name="string_made_loss">make loss</string>
     <string name="string_action_review">note</string>
+    <string name="actions">Actions</string>
+    <string name="reasons">Reasons</string>
+    <string name="others">Others</string>
+    <string name="choose_how_you_d_like_to_share_the_information">Choose how you\'d like to share the information:</string>
+    <string name="share_as_text">Share as Text</string>
+    <string name="share_as_markdown">Share as Markdown</string>
+    <string name="send_email">Send Email</string>
+    <string name="copied_to_clipboard">Copied to clipboard</string>
+    <string name="string_act_plan">Trade according to plan</string>
+    <string name="uncompleted">"uncompleted: "</string>
+    <string name="sort_tab_items">Sort Tab Items</string>
+    <string name="new_tabentity_item">New TabEntity Item</string>
+    <string name="new_target_createdate_choice">stock target create date</string>
+    <string name="NewTargetCreateDateChoice_lastest">Latest</string>
+    <string name="NewTargetCreateDateChoice_today">Today</string>
+    <string name="latest">Latest</string>
+    <string name="today">Today</string>
+    <string name="stocktarget_already_exists">%1$s already exists!</string>
+    <string name="download">Download</string>
 
 </resources>

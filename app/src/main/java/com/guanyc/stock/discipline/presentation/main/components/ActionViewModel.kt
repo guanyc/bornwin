@@ -1,12 +1,16 @@
 package com.guanyc.stock.discipline.presentation.main.components
 
 
+import android.content.Context
+import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.mlkit.vision.text.Text
 import com.guanyc.stock.discipline.domain.model.PinnedTabEntityStockTargetList
 import com.guanyc.stock.discipline.domain.model.StockNote
 import com.guanyc.stock.discipline.domain.model.StockNoteWithTargetLists
@@ -14,26 +18,39 @@ import com.guanyc.stock.discipline.domain.model.StockTarget
 import com.guanyc.stock.discipline.domain.model.TargetConstants
 import com.guanyc.stock.discipline.domain.model.ToppedTabEntityStockTargetList
 import com.guanyc.stock.discipline.domain.use_case.settings.GetSettingsUseCase
+import com.guanyc.stock.discipline.domain.use_case.settings.SaveSettingsUseCase
 import com.guanyc.stock.discipline.domain.use_case.stocks.AddStockTargetUseCase
 import com.guanyc.stock.discipline.domain.use_case.stocks.GetLatestStockNoteUseCase
 import com.guanyc.stock.discipline.domain.use_case.stocks.InsertStockNoteUseCase
+import com.guanyc.stock.discipline.presentation.stocks.JsonLoader
+import com.guanyc.stock.discipline.presentation.stocks.marketWords
 import com.guanyc.stock.discipline.presentation.targetconsts.GetTargetMetaUseCase
 import com.guanyc.stock.discipline.presentation.targetconsts.TargetConstantsUpdateUseCase
+import com.guanyc.stock.discipline.util.Constants
+import com.guanyc.stock.discipline.util.containsStockCode
+import com.guanyc.stock.discipline.util.getStockCode
+import com.guanyc.stock.discipline.util.settings.NewTargetCreateDateChoice
 import com.guanyc.stock.discipline.util.settings.OrderType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 
+//金溢科技
 
 @HiltViewModel
 class ActionViewModel @Inject constructor(
+
+    private val jsonLoader: JsonLoader,
+
     private val getSettings: GetSettingsUseCase,
-    //private val saveSetting: SaveSettingsUseCase,
+    private val saveSetting: SaveSettingsUseCase,
     private val getLastStockNote: GetLatestStockNoteUseCase,
     private val getTargetConstants: GetTargetMetaUseCase,
     private val updateTargetConstants: TargetConstantsUpdateUseCase,
@@ -53,14 +70,18 @@ class ActionViewModel @Inject constructor(
 
     private val updateStockTargetTabEntities: UpdateStockTargetTabEntitiesUseCase,
     private val addStockTarget: AddStockTargetUseCase,
-    private val insertStockNote: InsertStockNoteUseCase
+    private val insertStockNote: InsertStockNoteUseCase,
+    @ApplicationContext val context: Context
+    //    private val applicationContext: Context,
 
-    ) : ViewModel() {
+) : ViewModel() {
 
 
     data class UiState(
 
         //FIXME
+
+        val dataChoice: Int = 0,
 
         val latestStockNote: StockNoteWithTargetLists? = null,
 
@@ -103,7 +124,30 @@ class ActionViewModel @Inject constructor(
 
     var uiState: UiState by mutableStateOf(UiState())
 
+    val jsonContent = mutableStateOf<String?>(null)
+    val codeNameMap = mutableMapOf<String, String>()
+    private fun loadJsonContent() {
+        jsonContent.value = jsonLoader.loadJson("stockcodes.json")
+        codeNameMap.clear()
+
+        val jsonArray: JSONArray = JSONArray(jsonContent.value)
+
+        for (i in 0 until jsonArray.length()) {
+            val stock = jsonArray.getJSONObject(i)
+            val code = stock.getString("code")
+            val name = stock.getString("name")
+            if (!codeNameMap.containsKey(code)) {
+                codeNameMap.put(code, name)
+            }
+            //println("Code: $code, Name: $name")
+        }
+
+    }
+
     init {
+
+        loadJsonContent()
+
         initializeAndSequentiallyLoadData()
     }
 
@@ -115,6 +159,11 @@ class ActionViewModel @Inject constructor(
 
             kotlinx.coroutines.flow.combine(
 
+                getSettings(
+                    intPreferencesKey(Constants.NEW_TARGET_CREATEDATE_CHOICE_KEY),
+                    NewTargetCreateDateChoice.LATEST.value
+                ),
+
                 getTargetConstants(),
 
                 getStockTargetsUnCompleted(),
@@ -125,27 +174,32 @@ class ActionViewModel @Inject constructor(
 
                 getLastStockNote()
 
-            ) { targetConstants: TargetConstants,
-                stockTargets: List<StockTarget>,
-                pinnedTabEntityStockTargetList: List<PinnedTabEntityStockTargetList>,
-                toppedTabEntityStockTargetList: List<ToppedTabEntityStockTargetList>,
-                latestStockNote: StockNoteWithTargetLists
-                ->
-
-                uiState = uiState.copy(targetConstants = targetConstants)
-
+            ) {
+                //targetConstants: TargetConstants,
+                // stockTargets: List<StockTarget>,
+                //pinnedTabEntityStockTargetList: List<PinnedTabEntityStockTargetList>,
+                //toppedTabEntityStockTargetList: List<ToppedTabEntityStockTargetList>,
+                //latestStockNote: StockNoteWithTargetLists
+                    values ->
+                uiState = uiState.copy(dataChoice = values[0] as Int)
+                //targetConstants
+                uiState = uiState.copy(targetConstants = values[1] as TargetConstants)
                 uiState.targetConstants?.let {
                     uiState = uiState.copy(tabs = it.tabs)
                 }
-
                 //loadStockTargets
                 uiState = uiState.copy(
-                    stockTargets = stockTargets,
-                    tabPinList = pinnedTabEntityStockTargetList,
-                    tabTopList = toppedTabEntityStockTargetList,
-                    latestStockNote = latestStockNote
+                    //stockTargets
+                    stockTargets = values[2] as List<StockTarget>,
 
+                    //pinnedTabEntityStockTargetList
+                    tabPinList = values[3] as List<PinnedTabEntityStockTargetList>,
+                    //toppedTabEntityStockTargetList
+                    tabTopList = values[4] as List<ToppedTabEntityStockTargetList>,
+                    //latestStockNote
+                    latestStockNote = values[5] as StockNoteWithTargetLists
                 )
+
 
             }.collect {}
 
@@ -185,7 +239,7 @@ class ActionViewModel @Inject constructor(
 
             is ActionViewEvent.onItemEdited -> viewModelScope.launch {
 
-                Log.d("onItemEdited", " ${event.toString()}")
+                Log.d("onItemEdited", " $event")
 
                 var old = event.tabEntityOld
                 var edited = event.tabEntityEdited
@@ -356,11 +410,10 @@ class ActionViewModel @Inject constructor(
 
                     updateTabPinnedStockTargetList(yy)
 
-                    uiState =
-                        uiState.copy(tabPinList = uiState.tabPinList.toMutableList().apply {
-                            remove(xx)
-                            add(0, yy)
-                        })
+                    uiState = uiState.copy(tabPinList = uiState.tabPinList.toMutableList().apply {
+                        remove(xx)
+                        add(0, yy)
+                    })
                     //yy b保存
 
                 } else {//remove pin top
@@ -402,10 +455,9 @@ class ActionViewModel @Inject constructor(
 
                     updateTabToppedStockTargetList(existedTopList)
 
-                    uiState =
-                        uiState.copy(tabTopList = uiState.tabTopList.toMutableList().apply {
-                            add(0, existedTopList)
-                        })
+                    uiState = uiState.copy(tabTopList = uiState.tabTopList.toMutableList().apply {
+                        add(0, existedTopList)
+                    })
 
                 } else {
                     var existedTopList: ToppedTabEntityStockTargetList =
@@ -418,16 +470,16 @@ class ActionViewModel @Inject constructor(
 
                     updateTabToppedStockTargetList(existedTopList)
 
-                    uiState =
-                        uiState.copy(tabTopList = uiState.tabTopList.toMutableList().apply {
-                            add(0, existedTopList)
-                        })
+                    uiState = uiState.copy(tabTopList = uiState.tabTopList.toMutableList().apply {
+                        add(0, existedTopList)
+                    })
                 }
             }
 
             is ActionViewEvent.onItemTabEntitiesChanged -> viewModelScope.launch {
                 var tabOld = event.tabOld
                 var tabNew = event.tabNew
+
                 var stockTarget = event.stockTarget
 
                 stockTarget.tabs = tabNew
@@ -438,46 +490,233 @@ class ActionViewModel @Inject constructor(
 
             is ActionViewEvent.addNewFreshStockTarget -> viewModelScope.launch {
 
-                if (uiState.latestStockNote != null) {
-                    event.stockTarget.apply {
-                        this.stockNoteId = uiState.latestStockNote!!.note.stockNoteId
-                        this.createDate = uiState.latestStockNote!!.note.createDate
+                if (uiState.dataChoice == NewTargetCreateDateChoice.LATEST.value) {
+                    if (uiState.latestStockNote != null) {
+                        val tempDate = Calendar.getInstance()
+
+                        event.stockTarget.apply {
+                            this.stockNoteId = uiState.latestStockNote!!.note.stockNoteId
+                            this.createDate = uiState.latestStockNote!!.note.createDate
+                        }
+
+                        var stockTarget = event.stockTarget
+
+                        if (!uiState.stockTargets.any { it.code.equals(stockTarget.code) }) {
+                            Log.d("addNewFreshStockTarget Latest", stockTarget.toString())
+                            addStockTarget(stockTarget)
+
+                            uiState = getStockTargetsUnCompleted().firstOrNull()
+                                ?.let { uiState.copy(stockTargets = it) }!!
+
+                        }
+
+
+                    } else {
+
+                        val tempDate = Calendar.getInstance()
+                        val date = Date(tempDate.timeInMillis)
+                        val df = SimpleDateFormat("yyyyMMdd")
+                        var locale = Locale.getDefault()
+                        val createDate = df.format(date)
+                        val stockNote = StockNote(
+                            createDate = createDate,
+                        )
+
+                        var id = insertStockNote(stockNote)
+
+
+                        var stockTarget = event.stockTarget
+                        stockTarget.stockNoteId = id
+                        stockTarget.createDate = createDate
+
+                        if (!uiState.stockTargets.any { it.code.equals(stockTarget.code) }) {
+                            Log.d("addNewFreshStockTarget Today", stockTarget.toString())
+
+                            addStockTarget(stockTarget)
+
+                            uiState =
+                                uiState.copy(latestStockNote = getLastStockNote().firstOrNull())
+                            uiState = getStockTargetsUnCompleted().firstOrNull()
+                                ?.let { uiState.copy(stockTargets = it) }!!
+                        }
+
+
+                    }
+                } else {
+                    //  if(uiState.dataChoice == NewTargetCreateDateChoice.TODAY.value){
+                    val todayStr = SimpleDateFormat("yyyyMMdd").format(Date())
+                    val latestStr: String = uiState.latestStockNote!!.note.createDate
+
+                    var stockTarget = event.stockTarget
+
+
+                    if (latestStr != todayStr) {
+                        val stockNote = StockNote(
+                            createDate = todayStr,
+                        )
+                        val id = insertStockNote(stockNote)
+                        stockTarget.createDate = todayStr
+                        stockTarget.stockNoteId = id
+
+                        uiState = uiState.copy(latestStockNote = getLastStockNote().firstOrNull())
+                    } else {
+                        val stockNote = uiState.latestStockNote!!.note
+                        stockTarget.stockNoteId = stockNote.stockNoteId
+                        stockTarget.createDate = stockNote.createDate
                     }
 
-                    var stockTarget = event.stockTarget
+                    stockTarget.createDate = todayStr
 
-                    addStockTarget(stockTarget)
-                    uiState = getStockTargetsUnCompleted().firstOrNull()
-                        ?.let { uiState.copy(stockTargets = it) }!!
+                    if (!uiState.stockTargets.any { it.code.equals(stockTarget.code) }) {
+                        addStockTarget(stockTarget)
 
+                        uiState = uiState.copy(latestStockNote = getLastStockNote().firstOrNull())
+                        uiState = getStockTargetsUnCompleted().firstOrNull()
+                            ?.let { uiState.copy(stockTargets = it) }!!
+                    }
 
-                }else{
-
-                    val tempDate = Calendar.getInstance()
-                    val date = Date(tempDate.timeInMillis)
-                    val df = SimpleDateFormat("yyyyMMdd")
-                    var locale = Locale.getDefault()
-                    val createDate = df.format(date)
-                    val stockNote = StockNote(
-                        createDate = createDate,
-                    )
-
-                    var id = insertStockNote(stockNote)
-
-
-                    var stockTarget = event.stockTarget
-                    stockTarget.stockNoteId = id
-                    stockTarget.createDate = createDate
-
-                    addStockTarget(stockTarget)
-
-                    uiState = uiState.copy(latestStockNote = getLastStockNote().firstOrNull())
-                    uiState = getStockTargetsUnCompleted().firstOrNull()
-                        ?.let { uiState.copy(stockTargets = it) }!!
 
                 }
 
+                initializeAndSequentiallyLoadData()
 
+            }
+
+            is ActionViewEvent.OnScanPhoto -> viewModelScope.launch {
+
+                val currentLocale: Locale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    context.resources.configuration.locales[0] // For Android N and above
+                } else {
+                    context.resources.configuration.locale // For pre-Nougat Android versions
+                }
+
+                val language = currentLocale.language // e.g., "en"
+                val country = currentLocale.country // e.g., "US"
+                //val locale = "$language-$country"
+
+
+                var resultTexts = emptyList<String>().toMutableList()
+                var lines = emptyList<String>().toMutableList()
+
+                for (block: Text.TextBlock in event.visionText.textBlocks) {
+                    //val blockText = block.text
+                    //val blockCornerPoints = block.cornerPoints
+                    //val blockFrame = block.boundingBox
+
+                    for (line in block.lines) {
+                        val lineText = line.text
+                        if (!resultTexts.contains(lineText)) {
+                            Log.d("lineText", lineText)
+                            resultTexts.add(lineText)
+                        }
+
+                        //val lineCornerPoints = line.cornerPoints
+                        //val lineFrame = line.boundingBox
+                        /*for (element in line.elements) {
+                            val elementText = element.text
+                            val elementCornerPoints = element.cornerPoints
+                            val elementFrame = element.boundingBox
+                        }*/
+                    }
+                }
+
+                for (item in resultTexts) {
+                    if ((item.isBlank() || item.isEmpty() || item.trim().isBlank() || item.trim()
+                            .isEmpty())
+                    ) {
+                        continue
+                    }
+                    if (marketWords.any { it ->
+                            it.contains(item.trim()) || item.trim().contains(it.trim())
+                        }) {
+                        continue
+                    }
+
+                    if (item.matches("\\b\\d+\\.\\d+\\b".toRegex())) {
+                        //Log.d("containsStockCode?", "end element is :" + item)
+                        continue
+                    }
+
+                    if (containsStockCode(item)) {
+                        var stockcode = getStockCode(item.trim())
+                        //Log.d("containsStockCode?", "stockcode is :" + stockcode)
+                        if (!lines.contains(stockcode)) {
+                            lines.add(stockcode)
+                        }
+                        continue
+                    }
+                }// for resultlines
+
+                var filteredStockCodes =
+                    lines.filter { stockCode -> codeNameMap.containsKey(stockCode) }
+
+
+                if (uiState.dataChoice == NewTargetCreateDateChoice.LATEST.value) {
+                    val latestStockNote = uiState.latestStockNote!!.note
+                    if (filteredStockCodes.isNotEmpty()) {
+                        try {
+                            for (stockCode in filteredStockCodes) {
+                                val stockTarget = StockTarget(
+                                    stockNoteId = latestStockNote.stockNoteId,
+                                    createDate = latestStockNote.createDate,
+                                    code = stockCode,
+                                    name = codeNameMap[stockCode]!!
+                                )
+
+
+                                if (!uiState.stockTargets.any { it.code.equals(stockTarget.code) }) {
+                                    addStockTarget(stockTarget)
+
+                                    uiState =
+                                        uiState.copy(latestStockNote = getLastStockNote().firstOrNull())
+                                    uiState = getStockTargetsUnCompleted().firstOrNull()
+                                        ?.let { uiState.copy(stockTargets = it) }!!
+                                }
+
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+
+                } else if (uiState.dataChoice == NewTargetCreateDateChoice.TODAY.value) {
+                    if (filteredStockCodes.isNotEmpty()) {
+
+                        val tempDate = Calendar.getInstance()
+                        val date = Date(tempDate.timeInMillis)
+                        val df = SimpleDateFormat("yyyyMMdd")
+                        val createDate = df.format(date)
+
+                        val stockNote = StockNote(createDate = createDate)
+
+                        //TODO 最后的stocknote或者今天
+
+                        try {
+                            val stockNoteId = insertStockNote(stockNote = stockNote)
+
+                            for (stockCode in filteredStockCodes) {
+                                val stockTarget = StockTarget(
+                                    stockNoteId = stockNoteId,
+                                    createDate = createDate,
+                                    code = stockCode,
+                                    name = codeNameMap[stockCode]!!
+                                )
+
+                                if (!uiState.stockTargets.any { it.code.equals(stockTarget.code) }) {
+                                    addStockTarget(stockTarget)
+
+                                    uiState =
+                                        uiState.copy(latestStockNote = getLastStockNote().firstOrNull())
+                                    uiState = getStockTargetsUnCompleted().firstOrNull()
+                                        ?.let { uiState.copy(stockTargets = it) }!!
+                                }
+
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
             }
         }
 
@@ -485,6 +724,9 @@ class ActionViewModel @Inject constructor(
 }
 
 sealed class ActionViewEvent {
+
+    data class OnScanPhoto(val visionText: Text) : ActionViewEvent()
+
 
     data class addNewTabEntity(val tabEntity: TabEntity) : ActionViewEvent()
 
@@ -514,9 +756,7 @@ sealed class ActionViewEvent {
         ActionViewEvent()
 
     data class onStockTargetTopMoved(
-        val stockTarget: StockTarget,
-        val tabEntity: TabEntity,
-        val moveTop: Boolean
+        val stockTarget: StockTarget, val tabEntity: TabEntity, val moveTop: Boolean
     ) : ActionViewEvent()
 
 
@@ -530,8 +770,6 @@ sealed class ActionViewEvent {
     ) : ActionViewEvent()
 
     object InitAll : ActionViewEvent()
-    companion object {
-
-    }
+    companion object
 
 }

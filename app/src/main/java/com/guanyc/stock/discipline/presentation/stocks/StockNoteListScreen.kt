@@ -719,10 +719,6 @@ private fun TargetRows(
     }
 }
 
-fun showTargetsTitle(targets: List<StockTarget>) {
-    TODO("Not yet implemented")
-}
-
 @Composable
 private fun showTargets(
     targets: List<StockTarget>, targetListVisible: Boolean
@@ -825,7 +821,7 @@ fun TargetCardDialogAdd(
             Column {
                 Row() {
                     Text(
-                        "代码", modifier = Modifier.weight(2f)
+                        stringResource(id = R.string.target_code), modifier = Modifier.weight(2f)
                     )
                     OutlinedTextField(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -834,7 +830,7 @@ fun TargetCardDialogAdd(
                         modifier = Modifier.weight(4f),
                     )
                     Text(
-                        "名称", modifier = Modifier.weight(2f)
+                        stringResource(id = R.string.target_name), modifier = Modifier.weight(2f)
                     )
 
                     OutlinedTextField(
@@ -855,7 +851,7 @@ fun TargetCardDialogAdd(
                 ) {
 
                     Text(
-                        //"备选理由",
+
                         text = stringResource(id = R.string.target_reason_list)
                         //modifier = Modifier.padding(2.dp),
                         //style = MaterialTheme.typography.body1
@@ -924,10 +920,8 @@ fun TargetCardDialogAdd(
             Button(colors = ButtonDefaults.buttonColors(),
                 shape = RoundedCornerShape(6.dp),
                 onClick = {
-
                     var reduce: String = ""
                     var actionReduce: String = ""
-
 
                     var toAdd = StockTarget(
                         stockNoteId = stockTarget.stockNoteId,

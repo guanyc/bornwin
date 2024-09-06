@@ -53,7 +53,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.guanyc.stock.discipline.R
 import com.guanyc.stock.discipline.domain.model.StockTarget
-import com.guanyc.stock.discipline.presentation.stocks.StockTargetPeriod
+import com.guanyc.stock.discipline.util.StockTargetPeriod
 import com.guanyc.stock.discipline.util.settings.OrderType
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -185,7 +185,8 @@ fun StockTargetGivenOpportunityPercentScreen(
             item {
                 //周期 或者时间的起始截止
                 //FIXME TODO PRO 时间起止文字表示  时间选择前后箭头
-                QueryDateRangeTabRow(StockTargetPeriod.entries,
+                QueryDateRangeTabRow(
+                    StockTargetPeriod.entries,
                     selectedStockTargetPeriod = selectedStockTargetPeriod,
                     onChange = {
 
