@@ -437,7 +437,7 @@ class ActionViewModel @Inject constructor(
                 var existedPinnedList =
                     uiState.tabPinList.find { it.tab.title == tabEntity.title }!!
 
-                if (existedPinnedList.pinnedList.contains(stockTarget) || stockTarget.isTopPinned) {
+                if (existedPinnedList.pinnedList.contains(stockTarget) ) {
                     return@launch
                 }
 

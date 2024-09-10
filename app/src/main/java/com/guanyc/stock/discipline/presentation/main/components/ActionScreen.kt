@@ -80,7 +80,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Gray
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -99,16 +98,19 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import com.guanyc.stock.discipline.R
 import com.guanyc.stock.discipline.app.getString
+import com.guanyc.stock.discipline.domain.model.PinnedTabEntityStockTargetList
 import com.guanyc.stock.discipline.domain.model.StockTarget
+import com.guanyc.stock.discipline.domain.model.ToppedTabEntityStockTargetList
 import com.guanyc.stock.discipline.domain.model.tabActions
 import com.guanyc.stock.discipline.domain.model.tabReasons
 import com.guanyc.stock.discipline.domain.model.targetActionList
 import com.guanyc.stock.discipline.domain.model.targetReasonList
 import com.guanyc.stock.discipline.presentation.util.Screen
 import com.guanyc.stock.discipline.theme.Golden
+import com.guanyc.stock.discipline.theme.LightGray
 import com.guanyc.stock.discipline.theme.Orange
-import com.guanyc.stock.discipline.util.BackupUtil.toJson
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.processNextEventInCurrentThread
 import java.util.Locale
 
 @Composable
@@ -200,6 +202,13 @@ fun ActionScreen(
     var contents: List<StockTarget> by remember { mutableStateOf(emptyList()) }
     var favorites: List<Boolean> by remember { mutableStateOf(emptyList()) }
     var tabStrings = remember { mutableStateListOf<String>() }
+
+    var topPinnedStockTragetList: List<StockTarget> by remember { mutableStateOf(emptyList()) }
+
+    //val tabPinList: List<PinnedTabEntityStockTargetList> = emptyList<PinnedTabEntityStockTargetList>()
+    //val tabTopList: List<ToppedTabEntityStockTargetList> = emptyList<ToppedTabEntityStockTargetList>()
+
+
     //var targetReasonList = remember { mutableStateListOf<TabEntity>() }
 
 
@@ -223,14 +232,14 @@ fun ActionScreen(
         mutableStateOf<Uri?>(null)
     }
 
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
-        onResult = { uri ->
-            uri?.let {
-                //Log.d("imageUri", imageUri.toString())
-                imageUri = it
-            }
-        })
+    val galleryLauncher =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent(),
+            onResult = { uri ->
+                uri?.let {
+                    //Log.d("imageUri", imageUri.toString())
+                    imageUri = it
+                }
+            })
 
 
     BackHandler {
@@ -303,14 +312,6 @@ fun ActionScreen(
                     }
                 }
             }
-
-            favorites = contents.map { it.isFavorite }
-
-            tabStrings.clear()
-            tabStrings.addAll(contents.map { stockTarget ->
-                stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
-                    .map { it.title }.joinToString(";")})
-
 
 
         }
@@ -425,11 +426,6 @@ fun ActionScreen(
                             Log.d("createTargetDialogValue", stockTarget.toString())
 
                             contents = contents + stockTarget
-                            favorites = contents.map { it.isFavorite }
-                            tabStrings.clear()
-                            tabStrings.addAll(contents.map { stockTarget ->
-                                stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
-                                    .map { it.title }.joinToString(";")})
 
 
                         } else {
@@ -443,13 +439,14 @@ fun ActionScreen(
             }
 
 
-
+            //TABS LIST
             Card(
                 elevation = 2.dp,
                 modifier = Modifier.fillMaxWidth(),
             ) {
 
                 Column {
+                    //content header row
                     Row {
                         ScrollableTabRow(
                             modifier = Modifier.weight(1f),
@@ -483,7 +480,6 @@ fun ActionScreen(
                                 scope.launch {
                                     //openDialogEditTabEntityValue.value = true
                                     dropDownItemsExpanded = true
-
                                 }
                             }) {
                                 //Icons.Default.MoreVert
@@ -540,28 +536,46 @@ fun ActionScreen(
                                 }
                             }
                         }//Box icon
-                    }
+                    }//content header row
 
+                    //contetns
                     Row {
                         LazyColumn(
                             state = lazyListState, contentPadding = PaddingValues(bottom = 70.dp)
                         ) {
 
-                            Log.d("contents", contents.toJson())
+                            topPinnedStockTragetList = viewModel.uiState.tabPinList.firstOrNull {
+                                it.tab.title.equals(selectedTab.title)
+                            }!!.pinnedList
 
-                            //stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
-                            //  .map { it.title }.joinToString(";")
+                            contents =
+                                topPinnedStockTragetList + contents.filterNot { it.code in topPinnedStockTragetList.map { it.code } }
+
+                            favorites = contents.map { it.isFavorite }
+
+                            tabStrings.clear()
+                            tabStrings.addAll(contents.map { stockTarget ->
+                                stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
+                                    .map { it.title }.joinToString(";")
+                            })
+
+
+
 
                             itemsIndexed(contents) { index, item ->
+
+
                                 ListItem(index,
-                                    item,
-                                    favorites,
-                                    tabStrings.toList(),
+                                    isTopPinned = index < topPinnedStockTragetList.size,
+                                    stockTarget = item,
+                                    isFavorite = favorites,
+                                    itemString = tabStrings.toList(),
                                     onClickToShowDialog = {
                                         selectedItemIndex.value = index
                                         showContextMenuIconsDialog.value = true
                                     })
                             }
+
                         }
                     }
 
@@ -595,33 +609,33 @@ fun ActionScreen(
                                         Row(
                                             modifier = Modifier.padding(4.dp)
                                         ) {
-                                            Checkbox(
-                                                checked = currentSelections.any {
-                                                    it.equals(item) },
+                                            Checkbox(checked = currentSelections.any {
+                                                it.equals(item)
+                                            },
 
                                                 onCheckedChange = { checked ->
-                                                if (checked) {
-                                                    if (!currentSelections.any { it.equals(item) }) {
-                                                        currentSelections =
-                                                            currentSelections.toMutableList<String>()
-                                                                .apply {
-                                                                    this.add(
-                                                                        item
-                                                                    )
-                                                                }
+                                                    if (checked) {
+                                                        if (!currentSelections.any { it.equals(item) }) {
+                                                            currentSelections =
+                                                                currentSelections.toMutableList<String>()
+                                                                    .apply {
+                                                                        this.add(
+                                                                            item
+                                                                        )
+                                                                    }
+                                                        }
+                                                    } else {
+                                                        if (currentSelections.any { it.equals(item) }) {
+                                                            currentSelections =
+                                                                currentSelections.toMutableList<String>()
+                                                                    .apply {
+                                                                        this.remove(
+                                                                            item
+                                                                        )
+                                                                    }
+                                                        }
                                                     }
-                                                } else {
-                                                    if (currentSelections.any { it.equals(item) }) {
-                                                        currentSelections =
-                                                            currentSelections.toMutableList<String>()
-                                                                .apply {
-                                                                    this.remove(
-                                                                        item
-                                                                    )
-                                                                }
-                                                    }
-                                                }
-                                            })
+                                                })
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text(text = item)
                                         }
@@ -638,13 +652,9 @@ fun ActionScreen(
 
                                         Log.d(
                                             "currentTabs",
-                                            currentSelections.joinToString(";")
-                                        )
-
-                                        Log.d(
-                                            "currentTabs",
                                             currentTabs.map { it.title }.joinToString(";")
                                         )
+
 
                                         val tabOld = stockTarget.tabs
                                         stockTarget.tabs = currentTabs
@@ -657,20 +667,16 @@ fun ActionScreen(
                                             )
                                         )
 
+                                        if (!tabNew.any { it.title.equals(selectedTab.title) }) {
+                                            contents = contents.toMutableList() - stockTarget
 
-                                        //val stockTarget = contents[selectedItemIndex.value]
-
-                                        contents = contents.toMutableList()
-                                        favorites = contents.map { it.isFavorite }
-                                        tabStrings.clear()
-                                        tabStrings.addAll(contents.map { stockTarget ->
-                                            stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
-                                                .map { it.title }.joinToString(";")})
-
-                                        //selectedItemIndex for refresh
+                                        } else {
+                                            contents = contents.toMutableList()
+                                        }
 
 
-                                        //R.string.string_special
+
+
                                         if (tabNew.any { it.title.equals(getString(R.string.string_special)) }) {
                                             if (stockTarget.isFavorite == false) {
                                                 stockTarget.isFavorite = true
@@ -696,6 +702,7 @@ fun ActionScreen(
 
 
                                         onDismissRequest1()
+
                                     }, enabled = currentSelections.isNotEmpty<String>()
                                 ) {
                                     Text(getString(R.string.string_ok))
@@ -752,7 +759,8 @@ fun ActionScreen(
 
                             text = {
                                 Column(modifier = Modifier.padding(24.dp)) {
-                                    OutlinedTextField(value = text,
+                                    OutlinedTextField(
+                                        value = text,
                                         onValueChange = {
                                             text = it
                                             isValid.value =
@@ -889,13 +897,18 @@ fun ActionScreen(
 
                                     IconGrid(selectedItemIndex.value,
 
-                                        contents.size,
+                                        contentSize = contents.size,
 
-                                        stockTarget,
+                                        pinnedSize = viewModel.uiState.tabPinList.size,
 
-                                        favorites[selectedItemIndex.value],
+                                        stockTarget = stockTarget,
+
+                                        isFavorite = favorites[selectedItemIndex.value],
 
                                         onIconClick = { index ->
+
+                                            Log.d("IconGrid", "Clicked icon at index $index")
+
                                             // Handle icon click
                                             when (index) {
                                                 0 -> {
@@ -908,12 +921,6 @@ fun ActionScreen(
                                                     var tml = contents.toMutableList()
                                                     tml.removeAt(selectedItemIndex.value)
                                                     contents = tml
-                                                    favorites = contents.map { it.isFavorite }
-                                                    tabStrings.clear()
-                                                    tabStrings.addAll(contents.map { stockTarget ->
-                                                        stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
-                                                            .map { it.title }.joinToString(";")})
-
 
                                                     showContextMenuIconsDialog.value = false
                                                 }
@@ -934,11 +941,6 @@ fun ActionScreen(
                                                     )
 
                                                     contents = tml
-                                                    favorites = contents.map { it.isFavorite }
-                                                    tabStrings.clear()
-                                                    tabStrings.addAll(contents.map { stockTarget ->
-                                                        stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
-                                                            .map { it.title }.joinToString(";")})
 
 
                                                     stockTarget.isFavorite = newfavorite
@@ -958,57 +960,101 @@ fun ActionScreen(
 
                                                 }
 
-                                                3 -> {//pin top
+                                                3 -> {
+                                                    Log.d("pin top", "selectedItemIndex is ${selectedItemIndex.value} ")
+                                                    Log.d("pin top", "topPinnedStockTragetList size  is ${topPinnedStockTragetList.size} ")
+                                                    //topPinnedStockTragetList
+
+                                                    //pin top
                                                     //stockTarget pin top with tabname
                                                     //merge contents with top pinned items
                                                     var tml = contents.toMutableList()
 
-                                                    if (!stockTarget.isTopPinned) {//pin top
+                                                    stockTarget = contents[selectedItemIndex.value]
+                                                    //topPinnedStockTragetList
+
+                                                    if (topPinnedStockTragetList.size == 0) { //没有pinned item
+                                                        Log.d("pin top", "pin top == 0")
                                                         tml.removeIf { it -> it.code == stockTarget.code }
-                                                        stockTarget.isTopPinned =
-                                                            !stockTarget.isTopPinned
                                                         tml.add(0, stockTarget)
-                                                    } else {//unpin top
-                                                        tml.removeIf { it -> it.code == stockTarget.code }
-                                                        stockTarget.isTopPinned =
-                                                            !stockTarget.isTopPinned
-                                                        tml.add(stockTarget)
+
+                                                        val tpstl =  topPinnedStockTragetList.toMutableList()
+                                                        tpstl.add(stockTarget)
+
+                                                        topPinnedStockTragetList = tpstl
+
+
+                                                        viewModel.onEvent(
+                                                            ActionViewEvent.onStockTargetTopPinned(
+                                                                stockTarget,
+                                                                viewModel.uiState.tabs[selectedTabIndex],
+                                                                true
+                                                            )
+                                                        )
+
+
+                                                    } else {
+                                                        if (selectedItemIndex.value >= topPinnedStockTragetList.size) {//pin top
+                                                            Log.d("pin top", "pin top >0")
+                                                            tml.removeIf { it -> it.code == stockTarget.code }
+                                                            tml.add(0, stockTarget)
+
+                                                            val tpstl =  topPinnedStockTragetList.toMutableList()
+                                                            tpstl.add(stockTarget)
+
+                                                            topPinnedStockTragetList = tpstl
+
+
+                                                            viewModel.onEvent(
+                                                                ActionViewEvent.onStockTargetTopPinned(
+                                                                    stockTarget,
+                                                                    viewModel.uiState.tabs[selectedTabIndex],
+                                                                    true
+                                                                )
+                                                            )
+
+
+                                                        } else {//unpin top
+                                                            Log.d("pin top", "unpin top")
+                                                            tml.removeIf { it -> it.code == stockTarget.code }
+                                                            tml.add(stockTarget)
+
+                                                            val tpstl =  topPinnedStockTragetList.toMutableList()
+                                                            tpstl.remove(stockTarget)
+
+                                                            topPinnedStockTragetList = tpstl
+
+
+                                                            viewModel.onEvent(
+                                                                ActionViewEvent.onStockTargetTopPinned(
+                                                                    stockTarget,
+                                                                    viewModel.uiState.tabs[selectedTabIndex],
+                                                                    false
+                                                                )
+                                                            )
+                                                        }
+
                                                     }
 
                                                     contents = tml
-                                                    favorites = contents.map { it.isFavorite }
-                                                    tabStrings.clear()
-                                                    tabStrings.addAll(contents.map { stockTarget ->
-                                                        stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
-                                                            .map { it.title }.joinToString(";")})
-
-
-
-                                                    viewModel.onEvent(
-                                                        ActionViewEvent.onStockTargetTopPinned(
-                                                            stockTarget,
-                                                            viewModel.uiState.tabs[selectedTabIndex],
-                                                            stockTarget.isTopPinned
-                                                        )
-                                                    )
 
                                                     showContextMenuIconsDialog.value = false
 
                                                 }
 
                                                 4 -> { //move top
-                                                    if (stockTarget.isTopPinned) {
+                                                    if (selectedItemIndex.value < topPinnedStockTragetList.size) {
                                                         showContextMenuIconsDialog.value = false
                                                         return@IconGrid
                                                     }
 
                                                     var tml = contents.toMutableList()
 
-                                                    var indexFirst =
-                                                        tml.indexOfFirst { it -> it.isTopPinned == false }
+                                                    var indexFirst = topPinnedStockTragetList.size
+
+
 
                                                     tml.remove(stockTarget)
-
                                                     if (indexFirst < tml.size) {
                                                         tml.add(indexFirst, stockTarget)
                                                     } else {
@@ -1016,11 +1062,7 @@ fun ActionScreen(
                                                     }
 
                                                     contents = tml
-                                                    favorites = contents.map { it.isFavorite }
-                                                    tabStrings.clear()
-                                                    tabStrings.addAll(contents.map { stockTarget ->
-                                                        stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
-                                                            .map { it.title }.joinToString(";")})
+
 
 
                                                     ActionViewEvent.onStockTargetTopMoved(
@@ -1038,36 +1080,7 @@ fun ActionScreen(
 
                                                 }
 
-                                                "move bottom".hashCode() -> {//move bottom
 
-
-                                                    if (stockTarget.isTopPinned) {
-                                                        showContextMenuIconsDialog.value = false
-                                                        return@IconGrid
-                                                    }
-
-                                                    var tml = contents.toMutableList()
-
-                                                    tml.removeIf { it -> it.stockTargetId == stockTarget.stockTargetId }
-                                                    tml.add(stockTarget)
-
-                                                    contents = tml
-                                                    favorites = contents.map { it.isFavorite }
-                                                    tabStrings.clear()
-                                                    tabStrings.addAll(contents.map { stockTarget ->
-                                                        stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
-                                                            .map { it.title }.joinToString(";")})
-
-
-
-                                                    ActionViewEvent.onStockTargetTopMoved(
-                                                        stockTarget,
-                                                        viewModel.uiState.tabs[selectedTabIndex],
-                                                        false
-                                                    )
-
-                                                    showContextMenuIconsDialog.value = false
-                                                }
 
                                                 6 -> { //group
 
@@ -1083,10 +1096,9 @@ fun ActionScreen(
 
                                                     var tml = contents.toMutableList()
 
-                                                    if (stockTarget.isTopPinned) {
+                                                    if (selectedItemIndex.value < topPinnedStockTragetList.size) {
+
                                                         tml.removeIf { it -> it.code == stockTarget.code }
-                                                        stockTarget.isTopPinned =
-                                                            !stockTarget.isTopPinned
 
                                                         viewModel.onEvent(
                                                             ActionViewEvent.onStockTargetTopPinned(
@@ -1115,14 +1127,6 @@ fun ActionScreen(
                                                     )
 
                                                     contents = tml
-                                                    favorites = contents.map { it.isFavorite }
-                                                    tabStrings.clear()
-                                                    tabStrings.addAll(contents.map { stockTarget ->
-                                                        stockTarget.createDate + "\n" + stockTarget.tabs.filter { it.tabType == TAB_TYPE.TAB_REASON }
-                                                            .map { it.title }.joinToString(";")})
-
-
-
                                                     showContextMenuIconsDialog.value = false
                                                 }
                                             }
@@ -1364,7 +1368,8 @@ fun ListItem(
     stockTarget: StockTarget,
     isFavorite: List<Boolean>,
     itemString: List<String>,
-    onClickToShowDialog: () -> Unit
+    onClickToShowDialog: () -> Unit,
+    isTopPinned: Boolean
 ) {
 
     Row(
@@ -1392,7 +1397,7 @@ fun ListItem(
                     // modifier = Modifier.padding(16.dp)
                 )
 
-                if (stockTarget.isTopPinned) {
+                if (isTopPinned) {
                     Icon(
                         modifier = Modifier.size(16.dp),
                         imageVector = Icons.Default.PushPin,
@@ -1435,7 +1440,8 @@ fun ListItem(
 @Composable
 fun IconGrid(
     selectedItemIndex: Int,
-    itemSize: Int,
+    contentSize: Int,
+    pinnedSize: Int,
     stockTarget: StockTarget,
     isFavorite: Boolean,
     onIconClick: (Int) -> Unit
@@ -1451,75 +1457,81 @@ fun IconGrid(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             stringResource(id = R.string.make_profit)
-            IconItem(
+
+            IconItem(// delete
                 index = 0, onIconClick = { iconIndex ->
                     onIconClick(iconIndex)
                     isFavoriteInner = !isFavoriteInner
-                }, stockTarget, imageVectors[0], labelList[0], tint = Color.Black
+                }, stockTarget, imageVectors[0], labelList[0], tint = colors.primary
             )
-            IconItem( // complete
+
+            IconItem( // favorite
                 index = 1,
                 onIconClick,
                 stockTarget,
                 imageVectors[1],
                 labelList[1],
-                tint = if (isFavoriteInner) Golden else Gray
+                tint = if (isFavoriteInner) Golden else colors.primary
             )
-            IconItem( //favorite
+            IconItem( //edit note
                 index = 2,
                 onIconClick = onIconClick,
                 stockTarget = stockTarget,
                 imageVector = imageVectors[2],
                 label = labelList[2],
-                tint = if (stockTarget.isTopPinned) Golden else Gray
+                tint = if (stockTarget.comment.isNotEmpty()) Golden else colors.primary
             )
-            IconItem(
+            IconItem(  //top pin
                 index = 3,
                 onIconClick = onIconClick,
                 stockTarget = stockTarget,
                 imageVector = imageVectors[3],
                 label = labelList[3],
-                tint = Color.Black
+                tint = if (selectedItemIndex < pinnedSize) Golden else colors.primary,
+                enabled = true
             )
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
 
-            IconItem(//move top
+            IconItem(
+                //move top
                 index = 4,
                 onIconClick = onIconClick,
                 stockTarget = stockTarget,
                 imageVector = imageVectors[4],
                 label = labelList[4],
                 //FIXME 考虑tab top pinned items
-                tint = if (selectedItemIndex == 0) Gray else Color.Black,
-                enabled = selectedItemIndex != 0
+                tint = if (selectedItemIndex < pinnedSize) LightGray else colors.primary,
+                enabled = selectedItemIndex >= pinnedSize,
             )
+
             IconItem(
+                //share
                 index = 5,
                 onIconClick = onIconClick,
                 stockTarget = stockTarget,
                 imageVector = imageVectors[5],
                 label = labelList[5],
                 tint = colors.primary,
-
-                )
-            IconItem(//group
+            )
+            IconItem(
+//group
                 index = 6,
                 onIconClick = onIconClick,
                 stockTarget = stockTarget,
                 imageVector = imageVectors[6],
                 label = labelList[6],
-                tint = Color.Black
+                tint = colors.primary,
             )
-            IconItem(//group2
+            IconItem(//move from group
                 index = 7,
                 onIconClick = onIconClick,
                 stockTarget = stockTarget,
                 imageVector = imageVectors[7],
                 label = labelList[7],
-                tint = Color.Black
+                tint = Color.Red
             )
 
 

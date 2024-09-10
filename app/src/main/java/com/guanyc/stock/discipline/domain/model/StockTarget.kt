@@ -177,8 +177,8 @@ data class StockTarget(
      */
     var isFavorite: Boolean = false,
 
-    @Ignore
-    var isTopPinned: Boolean = false,
+    //@Ignore
+    //var isTopPinned: Boolean = false,
 
     @Ignore
     var isMoveTop: Boolean = false,
